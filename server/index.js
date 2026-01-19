@@ -37,7 +37,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../../frontend/junkyardgames-works')));
 
 // 获取用户真实IP
 function getClientIP(req) {
@@ -83,9 +82,9 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ success: true, message: 'Server is running' });
 });
 
-// 处理所有其他请求，返回index.html
+// 处理所有其他请求，返回404错误
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../frontend/junkyardgames-works', 'index.html'));
+    res.status(404).json({ success: false, error: 'Not found' });
 });
 
 app.listen(port, () => {
