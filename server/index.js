@@ -48,11 +48,15 @@ function getClientIP(req) {
 
 // 打点接口
 app.post('/api/track', (req, res) => {
+    console.log('Tracking API called with request body:', req.body);
+    console.log('Client IP:', getClientIP(req));
+    
     const { type, target, timestamp, page, stayTime } = req.body;
     const user_ip = getClientIP(req);
 
     // 验证数据
     if (!type || !timestamp || !page) {
+        console.log('Missing required fields:', { type, timestamp, page });
         return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
@@ -69,6 +73,7 @@ app.post('/api/track', (req, res) => {
     // 保存到数据库
     trackingRecord.save()
         .then(() => {
+            console.log('Tracking data saved successfully');
             res.status(200).json({ success: true });
         })
         .catch(err => {
