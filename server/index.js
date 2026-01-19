@@ -82,6 +82,34 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ success: true, message: 'Server is running' });
 });
 
+// 测试接口
+app.get('/api/test', (req, res) => {
+    // 获取查询参数，设置默认值
+    const { name = 'test', age = 18, message = 'Hello World' } = req.query;
+    
+    // 输出日志
+    console.log('Test API called with parameters:', {
+        name,
+        age,
+        message,
+        ip: getClientIP(req),
+        timestamp: new Date().toISOString()
+    });
+    
+    // 返回响应
+    res.status(200).json({
+        success: true,
+        message: 'Test API called successfully',
+        parameters: {
+            name,
+            age,
+            message
+        },
+        serverTime: new Date().toISOString(),
+        clientIP: getClientIP(req)
+    });
+});
+
 // 处理所有其他请求，返回404错误
 app.get('*', (req, res) => {
     res.status(404).json({ success: false, error: 'Not found' });
