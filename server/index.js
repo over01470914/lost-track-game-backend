@@ -31,9 +31,13 @@ const TrackingSchema = new mongoose.Schema({
 const Tracking = mongoose.model('Tracking', TrackingSchema);
 
 // 中间件
-app.use(cors());
+app.use(cors({
+    origin: '*', // 允许所有来源的请求
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../../frontend/web')));
+app.use(express.static(path.join(__dirname, '../../frontend/junkyardgames-works')));
 
 // 获取用户真实IP
 function getClientIP(req) {
@@ -81,7 +85,7 @@ app.get('/api/health', (req, res) => {
 
 // 处理所有其他请求，返回index.html
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../frontend/web', 'index.html'));
+    res.sendFile(path.join(__dirname, '../../frontend/junkyardgames-works', 'index.html'));
 });
 
 app.listen(port, () => {
