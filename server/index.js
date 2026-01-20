@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const config = require('../config/database.js');
-const fetch = require('node-fetch');
+const https = require("https");
 
 const app = express();
 const port = 3000;
@@ -62,23 +62,48 @@ function getClientIP(req) {
 
 // 获取IP地理位置
 async function getIPGeolocation(ip) {
-    try {
-        // 使用ipinfo.io的API，无需API密钥（有速率限制）
-        const response = await fetch(`https://ipinfo.io/${ip}/json`);
-        const data = await response.json();
-        return {
-            country: data.country || 'Unknown',
-            region: data.region || 'Unknown',
-            city: data.city || 'Unknown'
-        };
-    } catch (error) {
-        console.error('Error getting geolocation:', error);
-        return {
-            country: 'Unknown',
-            region: 'Unknown',
-            city: 'Unknown'
-        };
-    }
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: "ipinfo.io",
+      path: `/${ip}/json`,
+      method: "GET",
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+      res.on("end", () => {
+        try {
+          const result = JSON.parse(data);
+          resolve({
+            country: result.country || "Unknown",
+            region: result.region || "Unknown",
+            city: result.city || "Unknown",
+          });
+        } catch (error) {
+          console.error("Error parsing geolocation data:", error);
+          resolve({
+            country: "Unknown",
+            region: "Unknown",
+            city: "Unknown",
+          });
+        }
+      });
+    });
+
+    req.on("error", (error) => {
+      console.error("Error getting geolocation:", error);
+      resolve({
+        country: "Unknown",
+        region: "Unknown",
+        city: "Unknown",
+      });
+    });
+
+    req.end();
+  });
 }
 
 // 打点接口
