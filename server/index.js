@@ -8,8 +8,6 @@ const https = require("https");
 const app = express();
 const port = 3000;
 
-app.use(express.static(path.join(__dirname, "public")));
-
 // 连接数据库
 mongoose
   .connect(config.mongodb.uri, {
@@ -60,6 +58,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 // 获取用户真实IP
 function getClientIP(req) {
