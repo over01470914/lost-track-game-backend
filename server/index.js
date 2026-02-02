@@ -192,21 +192,23 @@ app.post("/api/track", async (req, res) => {
       }
     }
 
-    // 添加打点记录
-    userTracking.tracks.push({
+    let newData = {
       event_type: type,
       event_target: target || "",
       timestamp: timestamp || Date.now(),
       page,
       stay_time: stayTime || 0,
       created_at: recordTime, // [关键] 使用自定义的历史时间
-    });
+    };
+
+    // 添加打点记录
+    userTracking.tracks.push(newData);
 
     userTracking.updated_at = new Date();
     await userTracking.save();
 
     // 输出日志
-    console.log("Tracking data saved:", userTracking);
+    console.log("Tracking data saved:", newData);
 
     // 返回响应
     res.status(200).json({ success: true });
