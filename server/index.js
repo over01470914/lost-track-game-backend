@@ -116,65 +116,95 @@ async function getIPGeolocation(ip) {
   });
 }
 
-// 打点接口
+// ==========================================
+// [新增功能 1] 重置数据库接口
+// 警告：这将删除所有数据！建议在生产环境中增加密码验证
+// ==========================================
+app.delete("/api/admin/reset", async (req, res) => {
+  try {
+    await UserTracking.deleteMany({});
+    console.log("Database reset successfully.");
+    res.status(200).json({ success: true, message: "All data deleted" });
+  } catch (error) {
+    console.error("Error resetting database:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// ==========================================
+// [修改功能 2] 打点接口 (支持模拟数据注入)
+// ==========================================
 app.post("/api/track", async (req, res) => {
-  console.log("Tracking API called with request body:", req.body);
+  // 解构参数，新增 custom_created_at 和 mock_location
+  const {
+    type,
+    target,
+    timestamp,
+    page,
+    stayTime,
+    custom_created_at,
+    mock_location,
+  } = req.body;
 
-  const { type, target, timestamp, page, stayTime } = req.body;
-  const user_ip = getClientIP(req);
-  console.log("Client IP:", user_ip);
+  // 如果传入了 mock_ip，则使用它，否则获取真实 IP
+  const user_ip = req.body.mock_ip || getClientIP(req);
 
-  // 验证数据
-  if (!type || !timestamp || !page) {
-    console.log("Missing required fields:", { type, timestamp, page });
+  // 确定记录的时间：如果有自定义时间（Python脚本传入），则使用自定义时间，否则使用当前时间
+  const recordTime = custom_created_at
+    ? new Date(custom_created_at)
+    : new Date();
+
+  // 验证基本数据
+  if (!type || !page) {
     return res
       .status(400)
       .json({ success: false, error: "Missing required fields" });
   }
 
   try {
-    // 查找用户是否存在
     let userTracking = await UserTracking.findOne({ user_ip });
 
     if (!userTracking) {
-      // 新用户，获取地理位置
-      console.log("New user detected, getting geolocation...");
-      const location = await getIPGeolocation(user_ip);
-      console.log("Location info:", location);
+      // 新用户
+      let location;
 
-      // 创建新用户记录
+      // [关键修改] 如果请求体里带了 mock_location，直接使用，不再请求外部 API
+      // 这对批量造数据非常重要，防止被 IP API 封锁
+      if (mock_location) {
+        location = mock_location;
+      } else {
+        location = await getIPGeolocation(user_ip);
+      }
+
       userTracking = new UserTracking({
         user_ip,
         profile: {
           location,
-          first_login: new Date(),
-          last_login: new Date(),
+          first_login: recordTime, // 使用记录时间
+          last_login: recordTime,
         },
         tracks: [],
       });
     } else {
-      // 老用户，更新最后登录时间
-      console.log("Returning user detected, updating last login time...");
-      userTracking.profile.last_login = new Date();
+      // 老用户，更新最后登录时间 (比较时间，只更新更晚的时间)
+      if (recordTime > userTracking.profile.last_login) {
+        userTracking.profile.last_login = recordTime;
+      }
     }
 
-    // 添加新的打点记录
-    console.log("Adding new tracking record...");
+    // 添加打点记录
     userTracking.tracks.push({
       event_type: type,
-      event_target: target,
-      timestamp,
+      event_target: target || "",
+      timestamp: timestamp || Date.now(),
       page,
-      stay_time: stayTime,
+      stay_time: stayTime || 0,
+      created_at: recordTime, // [关键] 使用自定义的历史时间
     });
 
-    // 更新时间戳
     userTracking.updated_at = new Date();
-
-    // 保存到数据库
     await userTracking.save();
 
-    console.log("Tracking data saved successfully for user:", user_ip);
     res.status(200).json({ success: true });
   } catch (error) {
     console.error("Error saving tracking data:", error);
