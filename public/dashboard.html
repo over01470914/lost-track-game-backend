@@ -4,382 +4,365 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Analytics Dashboard</title>
-        <!-- 引入 Bootstrap 5 (自带深色模式) -->
-        <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <!-- 引入 Chart.js -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <style>:root
         {
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
-            --text-muted: #a0a0a0;
             --accent-blue: #3b82f6;
             --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
         }
-
         body {
             background-color: var(--bg-dark);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #ffffff;
+            color: #fff;
+            font-family: sans-serif;
             padding-bottom: 50px;
         }
-
-        /* 卡片样式优化 */
         .card {
             background-color: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 24px;
-            transition: transform 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            padding: 15px 20px;
-        }
-
-        .card-body {
-            padding: 20px;
-            position: relative;
-        }
-
-        /* 顶部大数字样式 */
-        .stat-card h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            background: linear-gradient(45deg, #fff, #a0a0a0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stat-card p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        /* 标题栏 */
-        .page-header {
-            padding: 30px 0;
             margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .page-header h1 {
-            font-weight: 800;
-            letter-spacing: -1px;
+        .nav-tabs .nav-link {
+            color: #888;
+            border: none;
         }
-
-        /* 图表容器固定高度，防止抖动 */
-        .chart-container-lg {
-            position: relative;
-            height: 350px;
-            width: 100%;
-        }
-        .chart-container-sm {
-            position: relative;
-            height: 250px;
-            width: 100%;
-        }
-
-        /* Loading 遮罩 */
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-dark);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .nav-tabs .nav-link.active {
+            background-color: transparent;
             color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+            font-weight: bold;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* 顶部时间样式 */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        .live-clock {
+            text-align: right;
+        }
+        .live-clock .time {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+        .live-clock .date {
+            font-size: 0.9rem;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
-    <!-- Loading 动画 -->
-    <div id="loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="page-header d-flex justify-content-between align-items-center">
+    <div
+        class="container">
+        <!-- 1. 顶部 Header & 时间 -->
+        <div class="header-section">
             <div>
-                <h1 class="display-5">Dashboard</h1>
-                <span class="text-muted">LostTrack Web Analytics</span>
+                <h2 class="m-0">📊 Dashboard</h2>
+                <span class="text-muted" style="font-size: 0.9rem;">Product Analytics</span>
             </div>
-            <button class="btn btn-outline-light btn-sm" onclick="location.reload()">Refresh Data</button>
-        </div>
-
-        <!-- 核心指标卡片 (KPI) -->
-        <div
-            class="row">
-            <!-- 总用户 -->
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="card-body">
-                        <p>TOTAL USERS</p>
-                        <h2 id="kpi-users">0</h2>
-                    </div>
-                </div>
-            </div>
-            <!-- 总交互次数 -->
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="card-body">
-                        <p>TOTAL INTERACTIONS</p>
-                        <h2 id="kpi-tracks">0</h2>
-                    </div>
-                </div>
-            </div>
-            <!-- 平均停留时长 (新增) -->
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="card-body">
-                        <p>AVG. STAY TIME (MS)</p>
-                        <h2 id="kpi-time">0 ms</h2>
-                    </div>
-                </div>
+            <div class="live-clock">
+                <div class="time" id="clock-time">00:00:00</div>
+                <div class="date" id="clock-date">YYYY-MM-DD</div>
             </div>
         </div>
 
-        <!-- 主图表区：趋势与组件排行 -->
+        <!-- 2. 导航 Tab (左右切换板块) -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="total-tab" data-bs-toggle="tab" data-bs-target="#total-pane" type="button">🌍 总览 (Total)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily-pane" type="button">📅 日视图 (Daily)</button>
+            </li>
+        </ul>
+
+        <!-- Tab 内容区 -->
         <div
-            class="row">
-            <!-- 时间趋势 -->
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-header">
-                        📈 交互趋势 (Timeline)
+            class="tab-content" id="myTabContent">
+
+            <!-- ================= 板块 1: 总览 (Total) ================= -->
+            <div
+                class="tab-pane fade show active" id="total-pane">
+                <!-- 核心 KPI -->
+                <div class="row mb-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card p-3">
+                            <small class="text-muted">Total Users</small>
+                            <h3 id="total-users">0</h3>
+                        </div>
                     </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card p-3">
+                            <small class="text-muted">Total Views</small>
+                            <h3 id="total-tracks">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card p-3">
+                            <small class="text-muted">Avg Stay Time</small>
+                            <h3 id="total-time">0s</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表：访问量:日期 (线图) -->
+                <div class="card">
+                    <div class="card-header">📈 历史访问趋势 (All Time Trend)</div>
                     <div class="card-body">
-                        <div class="chart-container-lg">
-                            <canvas id="timelineChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="totalTimelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 热门组件排行 -->
+                <div class="card mt-3">
+                    <div class="card-header">🔥 热门交互组件 Top 10</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="totalTargetChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 组件交互排行 (新增) -->
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        🎯 热门组件 Top 10 (Components)
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container-lg">
-                            <canvas id="targetChart"></canvas>
-                        </div>
-                    </div>
+            <!-- ================= 板块 2: 日视图 (Daily) ================= -->
+            <div
+                class="tab-pane fade" id="daily-pane">
+                <!-- 日期选择器 -->
+                <div class="d-flex align-items-center mb-4 p-3 bg-dark rounded border border-secondary">
+                    <label class="me-3 text-white">选择日期:</label>
+                    <input type="date" id="datePicker" class="form-control form-control-sm" style="width: auto; background:#333; color:white; border:none;">
+                    <button class="btn btn-primary btn-sm ms-3" onclick="loadDailyData()">查询</button>
                 </div>
-            </div>
-        </div>
 
-        <!-- 次级图表区：页面与分布 -->
-        <div
-            class="row">
-            <!-- 页面访问 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">📄 页面访问量 (Pages)</div>
-                    <div class="card-body">
-                        <div class="chart-container-sm">
-                            <canvas id="pageChart"></canvas>
+                <!-- 当日 KPI -->
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <div class="card p-3 text-center border-primary">
+                            <small class="text-muted">活跃用户</small>
+                            <h3 id="daily-users" class="text-primary">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">今日交互</small>
+                            <h3 id="daily-tracks">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">平均停留</small>
+                            <h3 id="daily-time">0s</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="row">
+                    <!-- 图表：地区:访问量 (柱状图) -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">🌍 地区分布 (按访问量)</div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="dailyGeoChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 图表：小时流量趋势 (新指标) -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">⏰ 今日活跃时段 (0-24h)</div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="dailyHourlyChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 用户地理分布 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-header">🌍 地区分布 (Geo)</div>
-                    <div class="card-body">
-                        <div class="chart-container-sm">
-                            <canvas id="geoChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 事件类型 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-header">🖱️ 交互类型 (Type)</div>
-                    <div class="card-body">
-                        <div class="chart-container-sm">
-                            <canvas id="eventChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+
+    <!-- 引入 Bootstrap JS (用于 Tab 切换) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // 全局配置 Chart.js 深色模式默认值
+        // --- 0. 工具函数 ---
         Chart.defaults.color = '#a0a0a0';
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-        Chart.defaults.font.family = "'Segoe UI', 'Helvetica', 'Arial', sans-serif";
 
-        const apiBase = '/api/stats';
-
-        // 通用 Fetch 函数
-        async function fetchData(endpoint) {
-            try {
-                const res = await fetch(`${apiBase}/${endpoint}`);
-                if (! res.ok) 
-                    throw new Error(`API Error: ${endpoint}`);
-                
-
-
-                const json = await res.json();
-                return json.success ? json.data : null;
-            } catch (err) {
-                console.error(err);
-                return null;
-            }
-        }
-
-        // 格式化时间显示 (毫秒 -> 秒/分)
         function formatTime(ms) {
             if (! ms) 
                 return '0s';
             
 
-
-            if (ms < 1000) 
-                return ms + 'ms';
-            
-
-
-            const sec = (ms / 1000).toFixed(1);
-            if (sec < 60) 
-                return sec + 's';
-            
-
-
-            return(sec / 60).toFixed(1) + 'm';
+            return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
         }
 
-        // 1. 初始化 KPI 数据
-        async function loadKPI() { // 获取概览
-            const overview = await fetchData('overview');
-            if (overview) {
-                document.getElementById('kpi-users').innerText = overview.total_users;
-                document.getElementById('kpi-tracks').innerText = overview.total_tracks;
-            }
+        // 实时时钟
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').innerText = now.toLocaleTimeString();
+            document.getElementById('clock-date').innerText = now.toLocaleDateString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-            // 获取平均停留时长
-            const avgTime = await fetchData('staytime');
-            if (avgTime !== null) {
-                document.getElementById('kpi-time').innerText = formatTime(avgTime);
+        // 设置日期选择器默认今天
+        document.getElementById('datePicker').valueAsDate = new Date();
+
+        const apiBase = '/api/stats';
+        let charts = {};
+        // 存储图表实例，方便销毁
+
+        // 通用 Fetch
+        async function fetchData(endpoint) {
+            try {
+                const res = await fetch(`${apiBase}/${endpoint}`);
+                const json = await res.json();
+                return json.success ? json.data : null;
+            } catch (e) {
+                console.error(e);
+                return null;
             }
         }
 
-        // 2. 渲染时间趋势图 (Gradient Line Chart)
-        async function loadTimelineChart() {
-            const data = await fetchData('timeline');
-            if (! data) 
-                return;
+        // --- 1. 加载【总览】数据 ---
+        async function loadTotalData() { // KPI
+            const ov = await fetchData('overview');
+            const time = await fetchData('staytime');
+            if (ov) {
+                document.getElementById('total-users').innerText = ov.total_users;
+                document.getElementById('total-tracks').innerText = ov.total_tracks;
+            }
+            if (time) 
+                document.getElementById('total-time').innerText = formatTime(time);
             
 
 
-            const ctx = document.getElementById('timelineChart').getContext('2d');
-
-            // 创建渐变填充
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d._id),
+            // 趋势图 (Line)
+            const timeline = await fetchData('timeline');
+            if (timeline) {
+                renderChart('totalTimelineChart', 'line', {
+                    labels: timeline.map(d => d._id),
                     datasets: [
                         {
-                            label: 'Interactions',
-                            data: data.map(d => d.count),
+                            label: '每日访问',
+                            data: timeline.map(d => d.count),
                             borderColor: '#3b82f6',
-                            backgroundColor: gradient,
-                            borderWidth: 2,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
                             fill: true,
-                            tension: 0.4, // 平滑曲线
-                            pointBackgroundColor: '#ffffff',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            tension: 0.4
                         }
                     ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
+                });
+            }
+
+            // 组件排行 (Bar)
+            const targets = await fetchData('targets');
+            if (targets) {
+                renderChart('totalTargetChart', 'bar', {
+                    labels: targets.map(d => d._id),
+                    datasets: [
+                        {
+                            label: '点击次数',
+                            data: targets.map(d => d.count),
+                            backgroundColor: '#8b5cf6'
                         }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            border: {
-                                dash: [5, 5]
-                            }
-                        }
-                    }
-                }
-            });
+                    ]
+                }, {indexAxis: 'y'}); // 横向
+            }
         }
 
-        // 3. 渲染组件交互排行 (Horizontal Bar Chart) - 新功能
-        async function loadTargetChart() {
-            const data = await fetchData('targets');
-            if (! data) 
+        // --- 2. 加载【日视图】数据 ---
+        async function loadDailyData() {
+            const date = document.getElementById('datePicker').value;
+            if (! date) 
                 return;
             
 
 
-            const ctx = document.getElementById('targetChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                indexAxis: 'y', // 横向柱状图
-                data: {
-                    labels: data.map(d => d._id.length > 15 ? d._id.substring(0, 15) + '...' : d._id), // 截断过长ID
+            // 加载 Daily KPI
+            const overview = await fetchData(`daily/overview?date=${date}`);
+            if (overview) {
+                document.getElementById('daily-users').innerText = overview.active_users;
+                document.getElementById('daily-tracks').innerText = overview.total_interactions;
+                document.getElementById('daily-time').innerText = formatTime(overview.avg_stay_time);
+            }
+
+            // 加载 Daily Geo (Bar Chart)
+            const geo = await fetchData(`daily/geolocation?date=${date}`);
+            if (geo) {
+                renderChart('dailyGeoChart', 'bar', {
+                    labels: geo.map(d => d._id),
                     datasets: [
                         {
-                            label: 'Clicks/Usage',
-                            data: data.map(d => d.count),
-                            backgroundColor: '#8b5cf6', // Purple
-                            borderRadius: 4
+                            label: '访问量',
+                            data: geo.map(d => d.count),
+                            backgroundColor: '#10b981'
                         }
                     ]
-                },
+                });
+            }
+
+            // 加载 Daily Hourly (Line Chart)
+            const hourly = await fetchData(`daily/hourly?date=${date}`);
+            if (hourly) { // 补全 0-23 小时，防止断裂
+                const hours = Array.from({
+                    length: 24
+                }, (_, i) => i);
+                const dataMap = {};
+                hourly.forEach(d => dataMap[d._id] = d.count);
+                const counts = hours.map(h => dataMap[h] || 0);
+
+                renderChart('dailyHourlyChart', 'line', {
+                    labels: hours.map(h => `${h}:00`),
+                    datasets: [
+                        {
+                            label: '每小时热度',
+                            data: counts,
+                            borderColor: '#f59e0b',
+                            tension: 0.4,
+                            fill: true,
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)'
+                        }
+                    ]
+                });
+            }
+        }
+
+        // --- 图表渲染核心 (自动销毁旧图表) ---
+        function renderChart(canvasId, type, data, extraOptions = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+
+            // 如果已存在，先销毁
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+
+            charts[canvasId] = new Chart(ctx, {
+                type: type,
+                data: data,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -391,145 +374,34 @@
                     scales: {
                         x: {
                             grid: {
-                                display: true,
-                                color: 'rgba(255,255,255,0.05)'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // 4. 渲染页面访问 (Bar Chart)
-        async function loadPageChart() {
-            const data = await fetchData('pages');
-            if (! data) 
-                return;
-            
-
-
-            const ctx = document.getElementById('pageChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(d => d._id),
-                    datasets: [
-                        {
-                            label: 'Views',
-                            data: data.map(d => d.count),
-                            backgroundColor: '#10b981', // Green
-                            borderRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
                                 display: false
                             }
                         },
                         y: {
                             grid: {
-                                display: true,
                                 color: 'rgba(255,255,255,0.05)'
                             }
                         }
-                    }
+                    },
+                    ...extraOptions
                 }
             });
         }
 
-        // 5. 渲染地理 & 事件类型 (Pie/Doughnut)
-        async function loadSmallCharts() { // Geo
-            const geoData = await fetchData('geolocation');
-            if (geoData) {
-                new Chart(document.getElementById('geoChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: geoData.map(d => d._id),
-                        datasets: [
-                            {
-                                data: geoData.map(d => d.count),
-                                backgroundColor: [
-                                    '#3b82f6',
-                                    '#8b5cf6',
-                                    '#10b981',
-                                    '#f59e0b',
-                                    '#ef4444'
-                                ],
-                                borderWidth: 0
-                            }
-                        ]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Event Type
-            const eventData = await fetchData('events');
-            if (eventData) {
-                new Chart(document.getElementById('eventChart'), {
-                    type: 'pie',
-                    data: {
-                        labels: eventData.map(d => d._id),
-                        datasets: [
-                            {
-                                data: eventData.map(d => d.count),
-                                backgroundColor: [
-                                    '#f59e0b', '#ef4444', '#3b82f6', '#10b981'
-                                ],
-                                borderWidth: 0
-                            }
-                        ]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // 初始化加载
-        window.onload = async () => {
-            const loading = document.getElementById('loading');
-
-            await Promise.all([
-                loadKPI(),
-                loadTimelineChart(),
-                loadTargetChart(),
-                loadPageChart(),
-                loadSmallCharts()
-            ]);
-
-            // 隐藏 Loading
-            loading.style.opacity = '0';
-            setTimeout(() => loading.remove(), 500);
+        // 初始化
+        window.onload = () => {
+            loadTotalData();
+            loadDailyData(); // 默认加载今天
         };
+
+        // 监听 Tab 切换，切换时可能需要重新调整图表尺寸 (可选)
+        const triggerTabList = document.querySelectorAll('button[data-bs-toggle="tab"]')
+        triggerTabList.forEach(triggerEl => {
+            const tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('shown.bs.tab', event => { // Tab 切换后触发一下 resize 确保 Chart.js 渲染正确
+                window.dispatchEvent(new Event('resize'));
+            })
+        })
     </script>
 
 </body></html>

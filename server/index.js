@@ -407,6 +407,110 @@ app.get("/api/stats/overview", async (req, res) => {
   }
 });
 
+// 辅助函数：构建日期查询范围 (处理 UTC 时区问题，这里简化为当天的起止)
+function getDateRange(dateStr) {
+  const start = new Date(dateStr);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(dateStr);
+  end.setHours(23, 59, 59, 999);
+  return { $gte: start, $lte: end };
+}
+
+// 1. [日视图] 每日概览 (KPI)
+app.get("/api/stats/daily/overview", async (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: "Date required" });
+
+  try {
+    const query = { created_at: getDateRange(date) };
+
+    // 当日活跃用户 (IP去重)
+    const activeUsers = await UserTracking.distinct("user_ip", {
+      "tracks.created_at": getDateRange(date).$gte,
+    }); // 注意：这里简化逻辑，只要当天有track就算
+    // 这里更严谨的做法是查询 tracks 数组里是否有当天的记录，为简化查询，我们查 updated_at 或 created_at
+
+    const dayDocs = await UserTracking.find({
+      "tracks.created_at": getDateRange(date),
+    });
+
+    // 计算当日总交互
+    let dayTracks = 0;
+    let stayTimes = [];
+
+    dayDocs.forEach((doc) => {
+      const validTracks = doc.tracks.filter((t) => {
+        const tDate = new Date(t.created_at);
+        const targetDate = new Date(date);
+        return (
+          tDate.getDate() === targetDate.getDate() &&
+          tDate.getMonth() === targetDate.getMonth()
+        );
+      });
+      dayTracks += validTracks.length;
+      validTracks.forEach((t) => {
+        if (t.stay_time > 0) stayTimes.push(t.stay_time);
+      });
+    });
+
+    const avgTime =
+      stayTimes.length > 0
+        ? Math.round(stayTimes.reduce((a, b) => a + b, 0) / stayTimes.length)
+        : 0;
+
+    res.json({
+      success: true,
+      data: {
+        active_users: dayDocs.length, // 简化版：当天有记录的用户
+        total_interactions: dayTracks,
+        avg_stay_time: avgTime,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// 2. [日视图] 地区分布 (Bar Chart)
+app.get("/api/stats/daily/geolocation", async (req, res) => {
+  const { date } = req.query;
+  try {
+    // 这里的逻辑稍微复杂，为了性能，我们假设用户最后一次登录在当天，就算当天的来源
+    const stats = await UserTracking.aggregate([
+      { $match: { updated_at: getDateRange(date) } },
+      { $group: { _id: "$profile.location.country", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// 3. [日视图] 小时级流量趋势 (更有意义的指标!)
+app.get("/api/stats/daily/hourly", async (req, res) => {
+  const { date } = req.query;
+  try {
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.created_at": getDateRange(date) } },
+      {
+        $group: {
+          _id: { $hour: "$tracks.created_at" }, // 按小时分组 0-23
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
 // 处理所有其他请求，返回404错误
 app.get("*", (req, res) => {
   res.status(404).json({ success: false, error: "Not found" });
