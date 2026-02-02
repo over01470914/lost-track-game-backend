@@ -1,246 +1,535 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-bs-theme="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>用户数据统计看板</title>
-        <!-- 引入 Bootstrap 样式 -->
+        <title>Analytics Dashboard</title>
+        <!-- 引入 Bootstrap 5 (自带深色模式) -->
         <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- 引入 Chart.js -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <style>
-            body {
-                background-color: #f8f9fa;
-                padding: 20px;
-            }
-            .card {
-                margin-bottom: 20px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .chart-container {
-                position: relative;
-                height: 300px;
-                width: 100%;
-            }
-            .header-title {
-                margin-bottom: 30px;
-                border-bottom: 2px solid #007bff;
-                padding-bottom: 10px;
-            }
-        </style>
-    </head>
-    <body>
 
-        <div class="container">
-            <h1 class="header-title">📊 用户追踪数据分析</h1>
+        <style>:root
+        {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-muted: #a0a0a0;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+        }
 
-            <!-- 概览卡片 -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h5 class="card-title">总用户数</h5>
-                            <h2 id="total-users" class="display-4">Loading...</h2>
-                        </div>
+        body {
+            background-color: var(--bg-dark);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            padding-bottom: 50px;
+        }
+
+        /* 卡片样式优化 */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 15px 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 顶部大数字样式 */
+        .stat-card h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #fff, #a0a0a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* 标题栏 */
+        .page-header {
+            padding: 30px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .page-header h1 {
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        /* 图表容器固定高度，防止抖动 */
+        .chart-container-lg {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        .chart-container-sm {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        /* Loading 遮罩 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading 动画 -->
+    <div id="loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-5">Dashboard</h1>
+                <span class="text-muted">LostTrack Web Analytics</span>
+            </div>
+            <button class="btn btn-outline-light btn-sm" onclick="location.reload()">Refresh Data</button>
+        </div>
+
+        <!-- 核心指标卡片 (KPI) -->
+        <div
+            class="row">
+            <!-- 总用户 -->
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <p>TOTAL USERS</p>
+                        <h2 id="kpi-users">0</h2>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h5 class="card-title">总事件数 (Tracks)</h5>
-                            <h2 id="total-tracks" class="display-4">Loading...</h2>
+            </div>
+            <!-- 总交互次数 -->
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <p>TOTAL INTERACTIONS</p>
+                        <h2 id="kpi-tracks">0</h2>
+                    </div>
+                </div>
+            </div>
+            <!-- 平均停留时长 (新增) -->
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <p>AVG. STAY TIME (MS)</p>
+                        <h2 id="kpi-time">0 ms</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主图表区：趋势与组件排行 -->
+        <div
+            class="row">
+            <!-- 时间趋势 -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        📈 交互趋势 (Timeline)
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container-lg">
+                            <canvas id="timelineChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 第一行图表：时间趋势 & 地理分布 -->
-            <div
-                class="row">
-                <!-- 每日活跃趋势 (折线图) -->
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">📈 每日访问趋势</div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="timelineChart"></canvas>
-                            </div>
-                        </div>
+            <!-- 组件交互排行 (新增) -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        🎯 热门组件 Top 10 (Components)
                     </div>
-                </div>
-                <!-- 用户地理分布 (饼图) -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">🌍 用户来源分布</div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="geoChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 第二行图表：页面访问 & 事件类型 -->
-            <div
-                class="row">
-                <!-- 页面访问量 (柱状图) -->
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">📄 热门页面访问</div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="pageChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 事件类型统计 (环形图) -->
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">🖱️ 事件交互类型</div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="eventChart"></canvas>
-                            </div>
+                    <div class="card-body">
+                        <div class="chart-container-lg">
+                            <canvas id="targetChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script>
-            // 基础配置
-            const apiBase = '/api/stats';
+        <!-- 次级图表区：页面与分布 -->
+        <div
+            class="row">
+            <!-- 页面访问 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">📄 页面访问量 (Pages)</div>
+                    <div class="card-body">
+                        <div class="chart-container-sm">
+                            <canvas id="pageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            // 获取数据并渲染的通用函数
-            async function fetchData(endpoint) {
+            <!-- 用户地理分布 -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">🌍 地区分布 (Geo)</div>
+                    <div class="card-body">
+                        <div class="chart-container-sm">
+                            <canvas id="geoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 事件类型 -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">🖱️ 交互类型 (Type)</div>
+                    <div class="card-body">
+                        <div class="chart-container-sm">
+                            <canvas id="eventChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局配置 Chart.js 深色模式默认值
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        Chart.defaults.font.family = "'Segoe UI', 'Helvetica', 'Arial', sans-serif";
+
+        const apiBase = '/api/stats';
+
+        // 通用 Fetch 函数
+        async function fetchData(endpoint) {
+            try {
                 const res = await fetch(`${apiBase}/${endpoint}`);
+                if (! res.ok) 
+                    throw new Error(`API Error: ${endpoint}`);
+                
+
+
                 const json = await res.json();
-                return json.success ? json.data : [];
+                return json.success ? json.data : null;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        // 格式化时间显示 (毫秒 -> 秒/分)
+        function formatTime(ms) {
+            if (! ms) 
+                return '0s';
+            
+
+
+            if (ms < 1000) 
+                return ms + 'ms';
+            
+
+
+            const sec = (ms / 1000).toFixed(1);
+            if (sec < 60) 
+                return sec + 's';
+            
+
+
+            return(sec / 60).toFixed(1) + 'm';
+        }
+
+        // 1. 初始化 KPI 数据
+        async function loadKPI() { // 获取概览
+            const overview = await fetchData('overview');
+            if (overview) {
+                document.getElementById('kpi-users').innerText = overview.total_users;
+                document.getElementById('kpi-tracks').innerText = overview.total_tracks;
             }
 
-            // 1. 加载概览数据
-            async function loadOverview() {
-                const data = await fetchData('overview');
-                document.getElementById('total-users').innerText = data.total_users;
-                document.getElementById('total-tracks').innerText = data.total_tracks;
+            // 获取平均停留时长
+            const avgTime = await fetchData('staytime');
+            if (avgTime !== null) {
+                document.getElementById('kpi-time').innerText = formatTime(avgTime);
             }
+        }
 
-            // 2. 渲染时间趋势图 (Line Chart)
-            async function loadTimelineChart() {
-                const data = await fetchData('timeline');
-                const ctx = document.getElementById('timelineChart').getContext('2d');
+        // 2. 渲染时间趋势图 (Gradient Line Chart)
+        async function loadTimelineChart() {
+            const data = await fetchData('timeline');
+            if (! data) 
+                return;
+            
 
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.map(item => item._id), // 日期
-                        datasets: [
-                            {
-                                label: '每日事件数',
-                                data: data.map(item => item.count),
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1,
-                                fill: true,
-                                backgroundColor: 'rgba(75, 192, 192, 0.2)'
-                            }
-                        ]
+
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+
+            // 创建渐变填充
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d._id),
+                    datasets: [
+                        {
+                            label: 'Interactions',
+                            data: data.map(d => d.count),
+                            borderColor: '#3b82f6',
+                            backgroundColor: gradient,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4, // 平滑曲线
+                            pointBackgroundColor: '#ffffff',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     },
-                    options: {
-                        maintainAspectRatio: false
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            border: {
+                                dash: [5, 5]
+                            }
+                        }
                     }
-                });
-            }
+                }
+            });
+        }
 
-            // 3. 渲染地理分布图 (Pie Chart)
-            async function loadGeoChart() {
-                const data = await fetchData('geolocation');
-                const ctx = document.getElementById('geoChart').getContext('2d');
+        // 3. 渲染组件交互排行 (Horizontal Bar Chart) - 新功能
+        async function loadTargetChart() {
+            const data = await fetchData('targets');
+            if (! data) 
+                return;
+            
 
-                new Chart(ctx, {
-                    type: 'pie',
+
+            const ctx = document.getElementById('targetChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                indexAxis: 'y', // 横向柱状图
+                data: {
+                    labels: data.map(d => d._id.length > 15 ? d._id.substring(0, 15) + '...' : d._id), // 截断过长ID
+                    datasets: [
+                        {
+                            label: 'Clicks/Usage',
+                            data: data.map(d => d.count),
+                            backgroundColor: '#8b5cf6', // Purple
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: true,
+                                color: 'rgba(255,255,255,0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. 渲染页面访问 (Bar Chart)
+        async function loadPageChart() {
+            const data = await fetchData('pages');
+            if (! data) 
+                return;
+            
+
+
+            const ctx = document.getElementById('pageChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d._id),
+                    datasets: [
+                        {
+                            label: 'Views',
+                            data: data.map(d => d.count),
+                            backgroundColor: '#10b981', // Green
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: true,
+                                color: 'rgba(255,255,255,0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 5. 渲染地理 & 事件类型 (Pie/Doughnut)
+        async function loadSmallCharts() { // Geo
+            const geoData = await fetchData('geolocation');
+            if (geoData) {
+                new Chart(document.getElementById('geoChart'), {
+                    type: 'doughnut',
                     data: {
-                        labels: data.map(item => item._id), // 国家
+                        labels: geoData.map(d => d._id),
                         datasets: [
                             {
-                                data: data.map(item => item.count),
+                                data: geoData.map(d => d.count),
                                 backgroundColor: [
-                                    '#FF6384',
-                                    '#36A2EB',
-                                    '#FFCE56',
-                                    '#4BC0C0',
-                                    '#9966FF'
-                                ]
-                            }
-                        ]
-                    },
-                    options: {
-                        maintainAspectRatio: false
-                    }
-                });
-            }
-
-            // 4. 渲染页面统计图 (Bar Chart)
-            async function loadPageChart() {
-                const data = await fetchData('pages');
-                const ctx = document.getElementById('pageChart').getContext('2d');
-
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: data.map(item => item._id), // 页面路径
-                        datasets: [
-                            {
-                                label: '访问次数',
-                                data: data.map(item => item.count),
-                                backgroundColor: '#36A2EB'
+                                    '#3b82f6',
+                                    '#8b5cf6',
+                                    '#10b981',
+                                    '#f59e0b',
+                                    '#ef4444'
+                                ],
+                                borderWidth: 0
                             }
                         ]
                     },
                     options: {
                         maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         }
                     }
                 });
             }
 
-            // 5. 渲染事件类型图 (Doughnut Chart)
-            async function loadEventChart() {
-                const data = await fetchData('events');
-                const ctx = document.getElementById('eventChart').getContext('2d');
-
-                new Chart(ctx, {
-                    type: 'doughnut',
+            // Event Type
+            const eventData = await fetchData('events');
+            if (eventData) {
+                new Chart(document.getElementById('eventChart'), {
+                    type: 'pie',
                     data: {
-                        labels: data.map(item => item._id), // 事件类型
+                        labels: eventData.map(d => d._id),
                         datasets: [
                             {
-                                data: data.map(item => item.count),
-                                backgroundColor: ['#FF9F40', '#FFCD56', '#4BC0C0', '#36A2EB']
+                                data: eventData.map(d => d.count),
+                                backgroundColor: [
+                                    '#f59e0b', '#ef4444', '#3b82f6', '#10b981'
+                                ],
+                                borderWidth: 0
                             }
                         ]
                     },
                     options: {
-                        maintainAspectRatio: false
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
                     }
                 });
             }
+        }
 
-            // 初始化所有图表
-            window.onload = () => {
-                loadOverview();
-                loadTimelineChart();
-                loadGeoChart();
-                loadPageChart();
-                loadEventChart();
-            };
-        </script>
+        // 初始化加载
+        window.onload = async () => {
+            const loading = document.getElementById('loading');
 
-    </body>
-</html>
+            await Promise.all([
+                loadKPI(),
+                loadTimelineChart(),
+                loadTargetChart(),
+                loadPageChart(),
+                loadSmallCharts()
+            ]);
+
+            // 隐藏 Loading
+            loading.style.opacity = '0';
+            setTimeout(() => loading.remove(), 500);
+        };
+    </script>
+
+</body></html>

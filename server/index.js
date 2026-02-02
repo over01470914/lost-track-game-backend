@@ -241,6 +241,51 @@ app.get("/api/stats/timeline", async (req, res) => {
   }
 });
 
+// 1. 组件交互排行 (Event Target 统计)
+app.get("/api/stats/targets", async (req, res) => {
+  try {
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      // 过滤掉空的 target
+      { $match: { "tracks.event_target": { $exists: true, $ne: "" } } },
+      {
+        $group: {
+          _id: "$tracks.event_target",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }, // 只取前10名
+    ]);
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// 2. 平均停留时长统计
+app.get("/api/stats/staytime", async (req, res) => {
+  try {
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.stay_time": { $gt: 0 } } }, // 只统计大于0的时间
+      {
+        $group: {
+          _id: null,
+          avgTime: { $avg: "$tracks.stay_time" },
+        },
+      },
+    ]);
+    // 如果没有数据，返回 0
+    const avg = stats.length > 0 ? Math.round(stats[0].avgTime) : 0;
+    res.status(200).json({ success: true, data: avg });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
 // 地理分布统计
 app.get("/api/stats/geolocation", async (req, res) => {
   try {
