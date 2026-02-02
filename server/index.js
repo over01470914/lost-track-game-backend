@@ -205,6 +205,10 @@ app.post("/api/track", async (req, res) => {
     userTracking.updated_at = new Date();
     await userTracking.save();
 
+    // 输出日志
+    console.log("Tracking data saved:", userTracking);
+
+    // 返回响应
     res.status(200).json({ success: true });
   } catch (error) {
     console.error("Error saving tracking data:", error);
