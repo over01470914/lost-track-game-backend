@@ -217,6 +217,17 @@ app.get("/api/test", (req, res) => {
 
 // 数据分析接口
 
+// 直接拿到所有裸数据
+app.get("/api/stats/naked-data", async (req, res) => {
+  try {
+    const stats = await UserTracking.find().populate("tracks");
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
 // 时间趋势统计 (最近7天或30天的打点趋势)
 app.get("/api/stats/timeline", async (req, res) => {
   try {
