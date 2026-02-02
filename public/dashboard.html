@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>用户数据统计看板</title>
+        <!-- 引入 Bootstrap 样式 -->
+        <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- 引入 Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {
+                background-color: #f8f9fa;
+                padding: 20px;
+            }
+            .card {
+                margin-bottom: 20px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+            }
+            .header-title {
+                margin-bottom: 30px;
+                border-bottom: 2px solid #007bff;
+                padding-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="container">
+            <h1 class="header-title">📊 用户追踪数据分析</h1>
+
+            <!-- 概览卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">总用户数</h5>
+                            <h2 id="total-users" class="display-4">Loading...</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">总事件数 (Tracks)</h5>
+                            <h2 id="total-tracks" class="display-4">Loading...</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第一行图表：时间趋势 & 地理分布 -->
+            <div
+                class="row">
+                <!-- 每日活跃趋势 (折线图) -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">📈 每日访问趋势</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 用户地理分布 (饼图) -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">🌍 用户来源分布</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="geoChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二行图表：页面访问 & 事件类型 -->
+            <div
+                class="row">
+                <!-- 页面访问量 (柱状图) -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📄 热门页面访问</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="pageChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 事件类型统计 (环形图) -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">🖱️ 事件交互类型</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="eventChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // 基础配置
+            const apiBase = '/api/stats';
+
+            // 获取数据并渲染的通用函数
+            async function fetchData(endpoint) {
+                const res = await fetch(`${apiBase}/${endpoint}`);
+                const json = await res.json();
+                return json.success ? json.data : [];
+            }
+
+            // 1. 加载概览数据
+            async function loadOverview() {
+                const data = await fetchData('overview');
+                document.getElementById('total-users').innerText = data.total_users;
+                document.getElementById('total-tracks').innerText = data.total_tracks;
+            }
+
+            // 2. 渲染时间趋势图 (Line Chart)
+            async function loadTimelineChart() {
+                const data = await fetchData('timeline');
+                const ctx = document.getElementById('timelineChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(item => item._id), // 日期
+                        datasets: [
+                            {
+                                label: '每日事件数',
+                                data: data.map(item => item.count),
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1,
+                                fill: true,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // 3. 渲染地理分布图 (Pie Chart)
+            async function loadGeoChart() {
+                const data = await fetchData('geolocation');
+                const ctx = document.getElementById('geoChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.map(item => item._id), // 国家
+                        datasets: [
+                            {
+                                data: data.map(item => item.count),
+                                backgroundColor: [
+                                    '#FF6384',
+                                    '#36A2EB',
+                                    '#FFCE56',
+                                    '#4BC0C0',
+                                    '#9966FF'
+                                ]
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // 4. 渲染页面统计图 (Bar Chart)
+            async function loadPageChart() {
+                const data = await fetchData('pages');
+                const ctx = document.getElementById('pageChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item._id), // 页面路径
+                        datasets: [
+                            {
+                                label: '访问次数',
+                                data: data.map(item => item.count),
+                                backgroundColor: '#36A2EB'
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 5. 渲染事件类型图 (Doughnut Chart)
+            async function loadEventChart() {
+                const data = await fetchData('events');
+                const ctx = document.getElementById('eventChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(item => item._id), // 事件类型
+                        datasets: [
+                            {
+                                data: data.map(item => item.count),
+                                backgroundColor: ['#FF9F40', '#FFCD56', '#4BC0C0', '#36A2EB']
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // 初始化所有图表
+            window.onload = () => {
+                loadOverview();
+                loadTimelineChart();
+                loadGeoChart();
+                loadPageChart();
+                loadEventChart();
+            };
+        </script>
+
+    </body>
+</html>
