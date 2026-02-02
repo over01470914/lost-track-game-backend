@@ -416,53 +416,55 @@ function getDateRange(dateStr) {
   return { $gte: start, $lte: end };
 }
 
-// 1. [日视图] 每日概览 (KPI)
+// --- 辅助函数：构建日期查询范围 (支持区间) ---
+function getDateRangeQuery(startStr, endStr) {
+  // 如果没有传日期，默认当天
+  const start = startStr ? new Date(startStr) : new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = endStr ? new Date(endStr) : new Date();
+  end.setHours(23, 59, 59, 999);
+
+  return { $gte: start, $lte: end };
+}
+
+// 1. [区间视图] 概览数据 (KPI) - 支持 start/end
 app.get("/api/stats/daily/overview", async (req, res) => {
-  const { date } = req.query;
-  if (!date) return res.status(400).json({ error: "Date required" });
-
+  const { startDate, endDate } = req.query;
   try {
-    const query = { created_at: getDateRange(date) };
+    const dateQuery = getDateRangeQuery(startDate, endDate);
 
-    // 当日活跃用户 (IP去重)
+    // 1. 活跃用户 (在区间内有记录的去重IP)
     const activeUsers = await UserTracking.distinct("user_ip", {
-      "tracks.created_at": getDateRange(date).$gte,
-    }); // 注意：这里简化逻辑，只要当天有track就算
-    // 这里更严谨的做法是查询 tracks 数组里是否有当天的记录，为简化查询，我们查 updated_at 或 created_at
-
-    const dayDocs = await UserTracking.find({
-      "tracks.created_at": getDateRange(date),
+      "tracks.created_at": dateQuery,
     });
 
-    // 计算当日总交互
-    let dayTracks = 0;
-    let stayTimes = [];
+    // 2. 总交互数 (Aggregation 更准确)
+    const interactionStats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.created_at": dateQuery } },
+      { $count: "total" },
+    ]);
+    const totalInteractions = interactionStats[0]?.total || 0;
 
-    dayDocs.forEach((doc) => {
-      const validTracks = doc.tracks.filter((t) => {
-        const tDate = new Date(t.created_at);
-        const targetDate = new Date(date);
-        return (
-          tDate.getDate() === targetDate.getDate() &&
-          tDate.getMonth() === targetDate.getMonth()
-        );
-      });
-      dayTracks += validTracks.length;
-      validTracks.forEach((t) => {
-        if (t.stay_time > 0) stayTimes.push(t.stay_time);
-      });
-    });
-
-    const avgTime =
-      stayTimes.length > 0
-        ? Math.round(stayTimes.reduce((a, b) => a + b, 0) / stayTimes.length)
-        : 0;
+    // 3. 平均停留时长
+    const timeStats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $match: {
+          "tracks.created_at": dateQuery,
+          "tracks.stay_time": { $gt: 0 },
+        },
+      },
+      { $group: { _id: null, avg: { $avg: "$tracks.stay_time" } } },
+    ]);
+    const avgTime = timeStats[0]?.avg ? Math.round(timeStats[0].avg) : 0;
 
     res.json({
       success: true,
       data: {
-        active_users: dayDocs.length, // 简化版：当天有记录的用户
-        total_interactions: dayTracks,
+        active_users: activeUsers.length,
+        total_interactions: totalInteractions,
         avg_stay_time: avgTime,
       },
     });
@@ -472,14 +474,24 @@ app.get("/api/stats/daily/overview", async (req, res) => {
   }
 });
 
-// 2. [日视图] 地区分布 (Bar Chart)
+// 2. [区间视图] 地区分布
 app.get("/api/stats/daily/geolocation", async (req, res) => {
-  const { date } = req.query;
+  const { startDate, endDate } = req.query;
   try {
-    // 这里的逻辑稍微复杂，为了性能，我们假设用户最后一次登录在当天，就算当天的来源
+    // 注意：为了性能，这里简化为查询用户最后更新时间在区间内的，或者也可以 unwind tracks 查精确的
+    // 这里使用更精确的 unwind 方式，统计区间内产生的流量来源
     const stats = await UserTracking.aggregate([
-      { $match: { updated_at: getDateRange(date) } },
-      { $group: { _id: "$profile.location.country", count: { $sum: 1 } } },
+      { $unwind: "$tracks" },
+      {
+        $match: { "tracks.created_at": getDateRangeQuery(startDate, endDate) },
+      },
+      // 这里需要关联 profile，因为 unwind 后 profile 在根节点
+      {
+        $group: {
+          _id: "$profile.location.country",
+          count: { $sum: 1 },
+        },
+      },
       { $sort: { count: -1 } },
     ]);
     res.json({ success: true, data: stats });
@@ -491,18 +503,48 @@ app.get("/api/stats/daily/geolocation", async (req, res) => {
 
 // 3. [日视图] 小时级流量趋势 (更有意义的指标!)
 app.get("/api/stats/daily/hourly", async (req, res) => {
-  const { date } = req.query;
+  const { startDate, endDate } = req.query;
   try {
     const stats = await UserTracking.aggregate([
       { $unwind: "$tracks" },
-      { $match: { "tracks.created_at": getDateRange(date) } },
+      {
+        $match: { "tracks.created_at": getDateRangeQuery(startDate, endDate) },
+      },
       {
         $group: {
-          _id: { $hour: "$tracks.created_at" }, // 按小时分组 0-23
+          _id: { $hour: "$tracks.created_at" },
           count: { $sum: 1 },
         },
       },
       { $sort: { _id: 1 } },
+    ]);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// 4. [区间视图] 热门组件 (新增需求)
+app.get("/api/stats/daily/targets", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $match: {
+          "tracks.created_at": getDateRangeQuery(startDate, endDate),
+          "tracks.event_target": { $exists: true, $ne: "" },
+        },
+      },
+      {
+        $group: {
+          _id: "$tracks.event_target",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
     ]);
     res.json({ success: true, data: stats });
   } catch (error) {

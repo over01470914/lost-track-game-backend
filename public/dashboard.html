@@ -9,33 +9,32 @@
 
         <style>:root
         {
-            --bg-dark: #0f172a; /* 更深邃的背景蓝黑 */
-            --card-bg: #1e293b; /* 稍微亮一点的卡片背景 */
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent-primary: #3b82f6; /* Blue */
-            --accent-success: #10b981; /* Green */
-            --accent-warn: #f59e0b; /* Orange */
-            --accent-purple: #8b5cf6; /* Purple */
+            --accent-primary: #3b82f6;
+            --accent-success: #10b981;
+            --accent-warn: #f59e0b;
+            --accent-purple: #8b5cf6;
         }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             padding-bottom: 60px;
         }
 
         /* 顶部 Header */
         .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             padding: 24px 0;
             margin-bottom: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
         .live-clock .time {
             font-size: 1.5rem;
             font-weight: 700;
@@ -48,46 +47,44 @@
             text-align: right;
         }
 
-        /* 卡片通用样式 */
+        /* 卡片样式 */
         .card {
             background-color: var(--card-bg);
-            border: none; /* 移除边框，更现代 */
+            border: none;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 24px;
         }
-
         .card-header {
             background: transparent;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 16px 20px;
+            padding: 15px 20px;
         }
-
         .card-body {
             padding: 20px;
         }
 
-        /* KPI 数字卡片 */
+        /* KPI 数字 */
         .kpi-card h3 {
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 0;
             color: #fff;
+            margin: 0;
         }
         .kpi-card small {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
+            text-transform: uppercase;
             display: block;
             margin-bottom: 5px;
-            text-transform: uppercase;
         }
 
-        /* 导航 Tab 样式 */
+        /* Tab 样式 */
         .nav-tabs {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 24px;
@@ -95,44 +92,58 @@
         .nav-tabs .nav-link {
             color: var(--text-muted);
             border: none;
-            padding: 12px 20px;
-            transition: all 0.2s;
+            padding: 10px 20px;
         }
         .nav-tabs .nav-link:hover {
             color: #fff;
         }
         .nav-tabs .nav-link.active {
-            background-color: transparent;
+            background: transparent;
             color: var(--accent-primary);
-            border-bottom: 3px solid var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
             font-weight: bold;
         }
 
-        /* 日期选择器美化 */
-        .date-picker-container {
+        /* 日期选择器区域 */
+        .date-control-bar {
             background: var(--card-bg);
-            padding: 10px 20px;
-            border-radius: 8px;
-            display: inline-flex;
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 24px;
+        }
+        .date-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         input[type="date"] {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
 
+        /* 图表容器 */
         .chart-container {
             position: relative;
-            height: 320px;
+            height: 300px;
             width: 100%;
         }
         .chart-container-sm {
             position: relative;
-            height: 260px;
+            height: 250px;
             width: 100%;
         }
     </style>
@@ -141,91 +152,108 @@
 
     <div
         class="container">
-        <!-- 1. 顶部 Header & 时间 -->
+        <!-- Header -->
         <div class="header-section">
             <div>
-                <h2 class="m-0 fw-bold">Analytics Dashboard</h2>
-                <span class="text-muted">Lost Track Web Analytics</span>
+                <h2 class="m-0 fw-bold">Analytics</h2>
+                <span class="text-muted">User Insights Dashboard</span>
             </div>
             <div class="live-clock">
                 <div class="time" id="clock-time">00:00:00</div>
-                <div class="date" id="clock-date">YYYY-MM-DD</div>
+                <div class="date" id="clock-date">loading...</div>
             </div>
         </div>
 
-        <!-- 2. 导航 Tab (日视图在前) -->
-        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily-pane" type="button">📅 日视图 (Daily)</button>
+        <!-- Navigation -->
+        <ul class="nav nav-tabs" id="mainTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="range-tab" data-bs-toggle="tab" data-bs-target="#range-pane" type="button">📅 区间视图 (Range View)</button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="total-tab" data-bs-toggle="tab" data-bs-target="#total-pane" type="button">🌍 总览 (Overview)</button>
+            <li class="nav-item">
+                <button class="nav-link" id="total-tab" data-bs-toggle="tab" data-bs-target="#total-pane" type="button">🌍 总览 (Total Overview)</button>
             </li>
         </ul>
 
         <div
-            class="tab-content" id="dashboardTabContent">
+            class="tab-content">
 
-            <!-- =============================================面板 1: 日视图 (Daily View) - 默认显示  包含: 今日交互数，平均停留，活跃时段，地区分布(日)============================================== -->
+            <!-- ================= PANEL 1: 区间视图 (含热门组件) ================= -->
             <div
-                class="tab-pane fade show active" id="daily-pane">
+                class="tab-pane fade show active" id="range-pane">
 
-                <!-- 日期控制栏 -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="date-picker-container">
-                        <span class="text-muted small">SELECT DATE</span>
-                        <input type="date" id="datePicker">
-                        <button class="btn btn-sm btn-primary ms-2" onclick="loadDailyData()">Apply</button>
+                <!-- 日期控制器 -->
+                <div class="date-control-bar">
+                    <span class="text-muted small fw-bold">DATE RANGE:</span>
+                    <div class="date-input-group">
+                        <input type="date" id="startDate">
+                        <span class="text-muted">-</span>
+                        <input type="date" id="endDate">
                     </div>
+                    <button class="btn btn-sm btn-primary px-3" onclick="loadRangeData()">🔍 Query</button>
+                    <div class="vr mx-2 bg-secondary opacity-25"></div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="resetToToday()">⏮ Today</button>
                 </div>
 
-                <!-- 第一行: KPI (交互数 + 停留时间) -->
+                <!-- KPI Row -->
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card kpi-card">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <small>Today's Interactions</small>
-                                    <h3 id="daily-tracks">0</h3>
-                                </div>
-                                <div class="text-primary fs-1 opacity-25">🖱️</div>
+                            <div class="card-body">
+                                <small>Active Users (In Range)</small>
+                                <h3 id="range-users">0</h3>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card kpi-card">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <small>Avg. Stay Time (Daily)</small>
-                                    <h3 id="daily-time">0s</h3>
-                                </div>
-                                <div class="text-success fs-1 opacity-25">⏱️</div>
+                            <div class="card-body">
+                                <small>Interactions</small>
+                                <h3 id="range-tracks">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <small>Avg. Stay Time</small>
+                                <h3 id="range-time">0s</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 第二行: 图表 (活跃时段 + 地区分布) -->
-                <div
-                    class="row">
-                    <!-- 活跃时段 (线图) -->
+                <!-- Row 2: 活跃时段 + 地区分布 -->
+                <div class="row">
                     <div class="col-lg-8">
                         <div class="card">
-                            <div class="card-header">⏰ 活跃时段 (Hourly Activity)</div>
+                            <div class="card-header">⏰ 活跃时段热力 (Hourly Activity)</div>
                             <div class="card-body">
                                 <div class="chart-container">
-                                    <canvas id="dailyHourlyChart"></canvas>
+                                    <canvas id="rangeHourlyChart"></canvas>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- 地区分布 (柱状图) -->
                     <div class="col-lg-4">
                         <div class="card">
-                            <div class="card-header">📍 地区分布 (Daily Geo)</div>
+                            <div class="card-header">📍 地区分布 (Geo)</div>
                             <div class="card-body">
                                 <div class="chart-container">
-                                    <canvas id="dailyGeoChart"></canvas>
+                                    <canvas id="rangeGeoChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: 热门组件 (新增) -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">🔥 热门组件 Top 10 (Popular Components)</div>
+                            <div class="card-body">
+                                <div class="chart-container-sm">
+                                    <canvas id="rangeTargetChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -233,17 +261,16 @@
                 </div>
             </div>
 
-            <!-- =============================================面板 2: 总览 (Overview) 包含: Total Users, Views, Avg Time, Trend, Components, Geo(Total)============================================== -->
+            <!-- ================= PANEL 2: 总览 ================= -->
             <div
                 class="tab-pane fade" id="total-pane">
-
-                <!-- 第一行: KPI (Users, Views, Time) -->
+                <!-- KPI Row -->
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card kpi-card">
                             <div class="card-body">
                                 <small>Total Users</small>
-                                <h3 id="total-users" class="text-white">0</h3>
+                                <h3 id="total-users">0</h3>
                             </div>
                         </div>
                     </div>
@@ -251,21 +278,21 @@
                         <div class="card kpi-card">
                             <div class="card-body">
                                 <small>Total Views</small>
-                                <h3 id="total-tracks" class="text-white">0</h3>
+                                <h3 id="total-tracks">0</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="card kpi-card">
                             <div class="card-body">
-                                <small>Avg. Stay Time (All Time)</small>
-                                <h3 id="total-time" class="text-white">0s</h3>
+                                <small>Avg Time (All)</small>
+                                <h3 id="total-time">0s</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 第二行: 历史趋势 (All Time Trend) -->
+                <!-- Trend -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
@@ -279,11 +306,11 @@
                     </div>
                 </div>
 
-                <!-- 第三行: 热门组件 + 总地区分布 -->
+                <!-- Targets & Geo -->
                 <div class="row">
                     <div class="col-lg-7">
                         <div class="card">
-                            <div class="card-header">🔥 热门交互组件 (Popular Components)</div>
+                            <div class="card-header">🎯 组件总榜 (All Time Targets)</div>
                             <div class="card-body">
                                 <div class="chart-container-sm">
                                     <canvas id="totalTargetChart"></canvas>
@@ -293,7 +320,7 @@
                     </div>
                     <div class="col-lg-5">
                         <div class="card">
-                            <div class="card-header">🌍 地区分布 (Total Geo)</div>
+                            <div class="card-header">🌍 地区总览 (Total Geo)</div>
                             <div class="card-body">
                                 <div class="chart-container-sm">
                                     <canvas id="totalGeoChart"></canvas>
@@ -309,40 +336,40 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- 配置 ---
+        // --- Config & Utils ---
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
 
         const apiBase = '/api/stats';
         let charts = {};
-        // 图表实例容器
 
-        // --- 工具函数 ---
         function formatTime(ms) {
             if (! ms) 
                 return '0s';
             
-
 
             return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
         }
 
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock-time').innerText = now.toLocaleTimeString();
-            document.getElementById('clock-date').innerText = now.toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+            document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
+            document.getElementById('clock-date').innerText = now.toLocaleDateString();
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 设置日期选择器默认今天
-        document.getElementById('datePicker').valueAsDate = new Date();
+        // 日期重置逻辑
+        function resetToToday() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            loadRangeData(); // 立即查询
+        }
+
+        // 初始化: 默认选择今天
+        resetToToday();
 
         async function fetchData(endpoint) {
             try {
@@ -355,6 +382,7 @@
             }
         }
 
+        // 核心渲染函数
         function renderChart(id, type, data, options = {}) {
             const ctx = document.getElementById(id).getContext('2d');
             if (charts[id]) 
@@ -362,51 +390,69 @@
             
 
 
-            charts[id] = new Chart(ctx, {
-                type: type,
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
+            // 默认配置
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
                             display: false
                         }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
+                    }, // 默认隐藏X网格
+                    y: {
+                        grid: {
+                            color: 'rgba(255,255,255,0.05)'
                         },
-                        y: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.05)'
-                            }
-                        }
-                    },
-                    ...options
+                        beginAtZero: true
+                    }
                 }
-            });
-        }
+            };
 
-        // --- 1. 加载【日视图】数据 (默认) ---
-        async function loadDailyData() {
-            const date = document.getElementById('datePicker').value;
-            if (! date) 
-                return;
+            // 深度合并配置 (简单版)
+            const finalOptions = {
+                ... defaultOptions,
+                ...options
+            };
+            if (options.scales) 
+                finalOptions.scales = {
+                    ... defaultOptions.scales,
+                    ...options.scales
+                };
+            
+
+            if (options.plugins) 
+                finalOptions.plugins = {
+                    ... defaultOptions.plugins,
+                    ...options.plugins
+                };
             
 
 
+            charts[id] = new Chart(ctx, {type, data, options: finalOptions});
+        }
+
+        // --- 1. 加载【区间视图】数据 ---
+        async function loadRangeData() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const query = `?startDate=${start}&endDate=${end}`;
+
             // KPI
-            const overview = await fetchData(`daily/overview?date=${date}`);
+            const overview = await fetchData(`daily/overview${query}`);
             if (overview) {
-                document.getElementById('daily-tracks').innerText = overview.total_interactions;
-                document.getElementById('daily-time').innerText = formatTime(overview.avg_stay_time);
+                document.getElementById('range-users').innerText = overview.active_users;
+                document.getElementById('range-tracks').innerText = overview.total_interactions;
+                document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
             }
 
-            // 活跃时段 (Line)
-            const hourly = await fetchData(`daily/hourly?date=${date}`);
+            // Hourly (Line)
+            const hourly = await fetchData(`daily/hourly${query}`);
             if (hourly) {
                 const hours = Array.from({
                     length: 24
@@ -414,13 +460,12 @@
                 const dataMap = {};
                 hourly.forEach(d => dataMap[d._id] = d.count);
 
-                // 创建渐变色
-                const ctx = document.getElementById('dailyHourlyChart').getContext('2d');
+                const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)'); // Orange
+                gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
                 gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
 
-                renderChart('dailyHourlyChart', 'line', {
+                renderChart('rangeHourlyChart', 'line', {
                     labels: hours.map(h => `${h}:00`),
                     datasets: [
                         {
@@ -435,10 +480,10 @@
                 });
             }
 
-            // 地区分布 (Bar)
-            const geo = await fetchData(`daily/geolocation?date=${date}`);
+            // Geo (Bar)
+            const geo = await fetchData(`daily/geolocation${query}`);
             if (geo) {
-                renderChart('dailyGeoChart', 'bar', {
+                renderChart('rangeGeoChart', 'bar', {
                     labels: geo.map(d => d._id),
                     datasets: [
                         {
@@ -450,10 +495,26 @@
                     ]
                 });
             }
+
+            // Targets (Horizontal Bar) - 新增
+            const targets = await fetchData(`daily/targets${query}`);
+            if (targets) {
+                renderChart('rangeTargetChart', 'bar', {
+                    labels: targets.map(d => d._id),
+                    datasets: [
+                        {
+                            label: 'Clicks',
+                            data: targets.map(d => d.count),
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 4
+                        }
+                    ]
+                }, {indexAxis: 'y'});
+            }
         }
 
-        // --- 2. 加载【总览】数据 (懒加载) ---
-        async function loadTotalData() { // KPI
+        // --- 2. 加载【总览】数据 ---
+        async function loadTotalData() {
             const ov = await fetchData('overview');
             const time = await fetchData('staytime');
             if (ov) {
@@ -465,30 +526,40 @@
             
 
 
-            // All Time Trend (Line)
+            // Timeline Trend (修复直线问题)
             const timeline = await fetchData('timeline');
             if (timeline) {
                 const ctx = document.getElementById('totalTimelineChart').getContext('2d');
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); // Blue
+                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
                 gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
                 renderChart('totalTimelineChart', 'line', {
                     labels: timeline.map(d => d._id),
                     datasets: [
                         {
-                            label: 'Daily Visits',
+                            label: 'Visits',
                             data: timeline.map(d => d.count),
                             borderColor: '#3b82f6',
                             backgroundColor: gradient,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
                         }
                     ]
+                }, {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            }
+                        }
+                    }
                 });
             }
 
-            // 热门组件 (Horizontal Bar)
+            // Total Targets
             const targets = await fetchData('targets');
             if (targets) {
                 renderChart('totalTargetChart', 'bar', {
@@ -503,7 +574,7 @@
                 }, {indexAxis: 'y'});
             }
 
-            // 地区分布 - 总 (Doughnut)
+            // Total Geo (修复: 移除背景线条)
             const geo = await fetchData('geolocation');
             if (geo) {
                 renderChart('totalGeoChart', 'doughnut', {
@@ -522,37 +593,36 @@
                         }
                     ]
                 }, {
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    }, // 强制隐藏坐标轴
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'right',
-                            labels: {
-                                color: '#94a3b8'
-                            }
+                            position: 'right'
                         }
                     }
                 });
             }
         }
 
-        // --- 初始化与事件监听 ---
-        window.onload = () => {
-            loadDailyData();
-            // 默认加载日视图
+        // Tab 监听 (懒加载)
+        const totalTabBtn = document.getElementById('total-tab');
+        totalTabBtn.addEventListener('shown.bs.tab', () => {
+            loadTotalData();
+            window.dispatchEvent(new Event('resize'));
+        }, {once: true});
 
-            // 只有当第一次点击 "总览" Tab 时才加载总览数据
-            const totalTabBtn = document.getElementById('total-tab');
-            totalTabBtn.addEventListener('shown.bs.tab', () => {
-                loadTotalData();
-            }, {once: true}); // 只执行一次
-        };
-
-        // Tab 切换时触发 resize 确保图表渲染正常
+        // 监听所有 Tab 切换以修正图表尺寸
         document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
             el.addEventListener('shown.bs.tab', () => {
                 window.dispatchEvent(new Event('resize'));
             });
         });
     </script>
-
 </body></html>
