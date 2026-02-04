@@ -633,5 +633,5 @@ app.get("*", (req, res) => {
 // 只监听 127.0.0.1
 // 这样即便防火墙失效，公网 IP:3000 也无法建立连接，只有服务器内部的 Nginx 能访问
 app.listen(port, "127.0.0.1", () => {
-  console.log(`Server running internally on http://127.0.0.1:${port}`);
+  console.log(`Server running internally on port: ${port}`);
 });

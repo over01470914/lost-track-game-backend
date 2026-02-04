@@ -29,7 +29,7 @@ npm install
 
 echo ""
 echo "=== 启动服务 ==="
-echo "请在浏览器中访问 http://服务器IP:3000"
+echo "请在浏览器中访问 https://dashboard.lost-track-game.com"
 echo ""
 
 # 启动服务

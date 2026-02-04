@@ -4,8 +4,8 @@ import time
 from datetime import datetime, timedelta
 
 # 配置
-API_URL = "http://129.204.20.48:3000/api/track"
-RESET_URL = "http://129.204.20.48:3000/api/admin/reset"
+API_URL = "https://lost-track-game.com/api/track"
+RESET_URL = "https://lost-track-game.com/api/admin/reset"
 TOTAL_REQUESTS = 500  # 总共生成多少条数据
 USER_POOL_SIZE = 50  # 模拟多少个不同的用户
 DAYS_BACK = 30  # 生成过去多少天的数据
