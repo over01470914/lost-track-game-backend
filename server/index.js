@@ -5,8 +5,27 @@ const path = require("path");
 const config = require("../config/database.js");
 const https = require("https");
 
+const rateLimit = require("express-rate-limit");
+
+// 创建限制规则
+const trackLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 15 分钟为一个周期
+  max: 100, // 每个 IP 在上述周期内最多允许 100 次打点请求
+  message: {
+    success: false,
+    error: "Too many requests, please try again later.",
+  },
+  standardHeaders: true, // 返回标准的 RateLimit 相关头
+  legacyHeaders: false, // 禁用旧版头
+});
+
 const app = express();
 const port = 3000;
+
+const ADMIN_TOKEN = "WPWix32CBJpLYAKiHYsx";
+
+// Nginx 代理，这样 req.ip 就能直接拿到玩家真实 IP
+app.set("trust proxy", true);
 
 // 连接数据库
 mongoose
@@ -60,13 +79,24 @@ app.use(
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
+// 权限校验中间件：保护数据接口
+const authGuard = (req, res, next) => {
+  // 从请求头获取 token
+  const clientToken = req.headers["authorization"];
+  if (clientToken === ADMIN_TOKEN) {
+    next(); // 校验通过
+  } else {
+    console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
+    res
+      .status(403)
+      .json({ success: false, error: "Access Denied: Unauthorized" });
+  }
+};
+
 // 获取用户真实IP
 function getClientIP(req) {
   return (
-    req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    req.connection.socket.remoteAddress
+    req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress
   );
 }
 
@@ -116,6 +146,9 @@ async function getIPGeolocation(ip) {
   });
 }
 
+// 3. 管理员接口：增加 authGuard 保护
+app.use("/api/admin", authGuard);
+
 // ==========================================
 // [新增功能 1] 重置数据库接口
 // 警告：这将删除所有数据！建议在生产环境中增加密码验证
@@ -134,7 +167,7 @@ app.delete("/api/admin/reset", async (req, res) => {
 // ==========================================
 // [修改功能 2] 打点接口 (支持模拟数据注入)
 // ==========================================
-app.post("/api/track", async (req, res) => {
+app.post("/api/track", trackLimiter, async (req, res) => {
   // 解构参数，新增 custom_created_at 和 mock_location
   const {
     type,
@@ -252,6 +285,9 @@ app.get("/api/test", (req, res) => {
 });
 
 // 数据分析接口
+
+// 所有以 /api/stats 开头的统计接口：全部增加 authGuard 保护
+app.use("/api/stats", authGuard);
 
 // 直接拿到所有裸数据
 app.get("/api/stats/naked-data", async (req, res) => {
@@ -594,6 +630,8 @@ app.get("*", (req, res) => {
   res.status(404).json({ success: false, error: "Not found" });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// 只监听 127.0.0.1
+// 这样即便防火墙失效，公网 IP:3000 也无法建立连接，只有服务器内部的 Nginx 能访问
+app.listen(port, "127.0.0.1", () => {
+  console.log(`Server running internally on http://127.0.0.1:${port}`);
 });

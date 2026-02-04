@@ -2,627 +2,637 @@
 <html lang="zh-CN" data-bs-theme="dark">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Analytics Dashboard</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Analytics Dashboard</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <style>:root
-        {
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-primary: #3b82f6;
-            --accent-success: #10b981;
-            --accent-warn: #f59e0b;
-            --accent-purple: #8b5cf6;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            padding-bottom: 60px;
-        }
-
-        /* 顶部 Header */
-        .header-section {
-            padding: 24px 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .live-clock .time {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-primary);
-            letter-spacing: 1px;
-        }
-        .live-clock .date {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-align: right;
-        }
-
-        /* 卡片样式 */
-        .card {
-            background-color: var(--card-bg);
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
-        }
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 15px 20px;
-        }
-        .card-body {
-            padding: 20px;
-        }
-
-        /* KPI 数字 */
-        .kpi-card h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #fff;
-            margin: 0;
-        }
-        .kpi-card small {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        /* Tab 样式 */
-        .nav-tabs {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 24px;
-        }
-        .nav-tabs .nav-link {
-            color: var(--text-muted);
-            border: none;
-            padding: 10px 20px;
-        }
-        .nav-tabs .nav-link:hover {
-            color: #fff;
-        }
-        .nav-tabs .nav-link.active {
-            background: transparent;
-            color: var(--accent-primary);
-            border-bottom: 2px solid var(--accent-primary);
-            font-weight: bold;
-        }
-
-        /* 日期选择器区域 */
-        .date-control-bar {
-            background: var(--card-bg);
-            padding: 12px 20px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 24px;
-        }
-        .date-input-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        input[type="date"] {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-
-        /* 图表容器 */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        .chart-container-sm {
-            position: relative;
-            height: 250px;
-            width: 100%;
-        }
-    </style>
-</head>
-<body>
-
-    <div
-        class="container">
-        <!-- Header -->
-        <div class="header-section">
-            <div>
-                <h2 class="m-0 fw-bold">Analytics</h2>
-                <span class="text-muted">User Insights Dashboard</span>
-            </div>
-            <div class="live-clock">
-                <div class="time" id="clock-time">00:00:00</div>
-                <div class="date" id="clock-date">loading...</div>
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <ul class="nav nav-tabs" id="mainTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="range-tab" data-bs-toggle="tab" data-bs-target="#range-pane" type="button">📅 区间视图 (Range View)</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="total-tab" data-bs-toggle="tab" data-bs-target="#total-pane" type="button">🌍 总览 (Total Overview)</button>
-            </li>
-        </ul>
-
-        <div
-            class="tab-content">
-
-            <!-- ================= PANEL 1: 区间视图 (含热门组件) ================= -->
-            <div
-                class="tab-pane fade show active" id="range-pane">
-
-                <!-- 日期控制器 -->
-                <div class="date-control-bar">
-                    <span class="text-muted small fw-bold">DATE RANGE:</span>
-                    <div class="date-input-group">
-                        <input type="date" id="startDate">
-                        <span class="text-muted">-</span>
-                        <input type="date" id="endDate">
-                    </div>
-                    <button class="btn btn-sm btn-primary px-3" onclick="loadRangeData()">🔍 Query</button>
-                    <div class="vr mx-2 bg-secondary opacity-25"></div>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="resetToToday()">⏮ Today</button>
-                </div>
-
-                <!-- KPI Row -->
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Active Users (In Range)</small>
-                                <h3 id="range-users">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Interactions</small>
-                                <h3 id="range-tracks">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Avg. Stay Time</small>
-                                <h3 id="range-time">0s</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Row 2: 活跃时段 + 地区分布 -->
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-header">⏰ 活跃时段热力 (Hourly Activity)</div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="rangeHourlyChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="card">
-                            <div class="card-header">📍 地区分布 (Geo)</div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="rangeGeoChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Row 3: 热门组件 (新增) -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">🔥 热门组件 Top 10 (Popular Components)</div>
-                            <div class="card-body">
-                                <div class="chart-container-sm">
-                                    <canvas id="rangeTargetChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ================= PANEL 2: 总览 ================= -->
-            <div
-                class="tab-pane fade" id="total-pane">
-                <!-- KPI Row -->
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Total Users</small>
-                                <h3 id="total-users">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Total Views</small>
-                                <h3 id="total-tracks">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card kpi-card">
-                            <div class="card-body">
-                                <small>Avg Time (All)</small>
-                                <h3 id="total-time">0s</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Trend -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">📈 历史访问趋势 (All Time Trend)</div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="totalTimelineChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Targets & Geo -->
-                <div class="row">
-                    <div class="col-lg-7">
-                        <div class="card">
-                            <div class="card-header">🎯 组件总榜 (All Time Targets)</div>
-                            <div class="card-body">
-                                <div class="chart-container-sm">
-                                    <canvas id="totalTargetChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="card">
-                            <div class="card-header">🌍 地区总览 (Total Geo)</div>
-                            <div class="card-body">
-                                <div class="chart-container-sm">
-                                    <canvas id="totalGeoChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // --- Config & Utils ---
-        Chart.defaults.color = '#94a3b8';
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
-
-        const apiBase = '/api/stats';
-        let charts = {};
-
-        function formatTime(ms) {
-            if (! ms) 
-                return '0s';
-            
-
-            return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
-            document.getElementById('clock-date').innerText = now.toLocaleDateString();
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // 日期重置逻辑
-        function resetToToday() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('endDate').value = today;
-            loadRangeData(); // 立即查询
-        }
-
-        // 初始化: 默认选择今天
-        resetToToday();
-
-        async function fetchData(endpoint) {
-            try {
-                const res = await fetch(`${apiBase}/${endpoint}`);
-                const json = await res.json();
-                return json.success ? json.data : null;
-            } catch (e) {
-                console.error(e);
-                return null;
-            }
-        }
-
-        // 核心渲染函数
-        function renderChart(id, type, data, options = {}) {
-            const ctx = document.getElementById(id).getContext('2d');
-            if (charts[id]) 
-                charts[id].destroy();
-            
-
-
-            // 默认配置
-            const defaultOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+                    <style>:root
+                    {
+                        --bg-dark: #0f172a;
+                        --card-bg: #1e293b;
+                        --text-main: #e2e8f0;
+                        --text-muted: #94a3b8;
+                        --accent-primary: #3b82f6;
+                        --accent-success: #10b981;
+                        --accent-warn: #f59e0b;
+                        --accent-purple: #8b5cf6;
                     }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }, // 默认隐藏X网格
-                    y: {
-                        grid: {
-                            color: 'rgba(255,255,255,0.05)'
-                        },
-                        beginAtZero: true
+
+                    body {
+                        background-color: var(--bg-dark);
+                        color: var(--text-main);
+                        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+                        padding-bottom: 60px;
                     }
-                }
-            };
 
-            // 深度合并配置 (简单版)
-            const finalOptions = {
-                ... defaultOptions,
-                ...options
-            };
-            if (options.scales) 
-                finalOptions.scales = {
-                    ... defaultOptions.scales,
-                    ...options.scales
-                };
-            
+                    /* 顶部 Header */
+                    .header-section {
+                        padding: 24px 0;
+                        margin-bottom: 20px;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .live-clock .time {
+                        font-size: 1.5rem;
+                        font-weight: 700;
+                        color: var(--accent-primary);
+                        letter-spacing: 1px;
+                    }
+                    .live-clock .date {
+                        font-size: 0.85rem;
+                        color: var(--text-muted);
+                        text-align: right;
+                    }
 
-            if (options.plugins) 
-                finalOptions.plugins = {
-                    ... defaultOptions.plugins,
-                    ...options.plugins
-                };
-            
+                    /* 卡片样式 */
+                    .card {
+                        background-color: var(--card-bg);
+                        border: none;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        margin-bottom: 24px;
+                    }
+                    .card-header {
+                        background: transparent;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: var(--text-muted);
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        padding: 15px 20px;
+                    }
+                    .card-body {
+                        padding: 20px;
+                    }
+
+                    /* KPI 数字 */
+                    .kpi-card h3 {
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: #fff;
+                        margin: 0;
+                    }
+                    .kpi-card small {
+                        font-size: 0.8rem;
+                        color: var(--text-muted);
+                        text-transform: uppercase;
+                        display: block;
+                        margin-bottom: 5px;
+                    }
+
+                    /* Tab 样式 */
+                    .nav-tabs {
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                        margin-bottom: 24px;
+                    }
+                    .nav-tabs .nav-link {
+                        color: var(--text-muted);
+                        border: none;
+                        padding: 10px 20px;
+                    }
+                    .nav-tabs .nav-link:hover {
+                        color: #fff;
+                    }
+                    .nav-tabs .nav-link.active {
+                        background: transparent;
+                        color: var(--accent-primary);
+                        border-bottom: 2px solid var(--accent-primary);
+                        font-weight: bold;
+                    }
+
+                    /* 日期选择器区域 */
+                    .date-control-bar {
+                        background: var(--card-bg);
+                        padding: 12px 20px;
+                        border-radius: 10px;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        flex-wrap: wrap;
+                        border: 1px solid rgba(255, 255, 255, 0.05);
+                        margin-bottom: 24px;
+                    }
+                    .date-input-group {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    input[type="date"] {
+                        background: rgba(0, 0, 0, 0.2);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        color: #fff;
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        font-size: 0.9rem;
+                        outline: none;
+                    }
+                    input[type="date"]::-webkit-calendar-picker-indicator {
+                        filter: invert(1);
+                        cursor: pointer;
+                    }
+
+                    /* 图表容器 */
+                    .chart-container {
+                        position: relative;
+                        height: 300px;
+                        width: 100%;
+                    }
+                    .chart-container-sm {
+                        position: relative;
+                        height: 250px;
+                        width: 100%;
+                    }
+                </style>
+            </head>
+            <body>
+
+                <div
+                    class="container">
+                    <!-- Header -->
+                    <div class="header-section">
+                        <div>
+                            <h2 class="m-0 fw-bold">Analytics</h2>
+                            <span class="text-muted">User Insights Dashboard</span>
+                        </div>
+                        <div class="live-clock">
+                            <div class="time" id="clock-time">00:00:00</div>
+                            <div class="date" id="clock-date">loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <ul class="nav nav-tabs" id="mainTab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="range-tab" data-bs-toggle="tab" data-bs-target="#range-pane" type="button">📅 区间视图 (Range View)</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="total-tab" data-bs-toggle="tab" data-bs-target="#total-pane" type="button">🌍 总览 (Total Overview)</button>
+                        </li>
+                    </ul>
+
+                    <div
+                        class="tab-content">
+
+                        <!-- ================= PANEL 1: 区间视图 (含热门组件) ================= -->
+                        <div
+                            class="tab-pane fade show active" id="range-pane">
+
+                            <!-- 日期控制器 -->
+                            <div class="date-control-bar">
+                                <span class="text-muted small fw-bold">DATE RANGE:</span>
+                                <div class="date-input-group">
+                                    <input type="date" id="startDate">
+                                        <span class="text-muted">-</span>
+                                        <input type="date" id="endDate"></div>
+                                        <button class="btn btn-sm btn-primary px-3" onclick="loadRangeData()">🔍 Query</button>
+                                        <div class="vr mx-2 bg-secondary opacity-25"></div>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="resetToToday()">⏮ Today</button>
+                                    </div>
+
+                                    <!-- KPI Row -->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Active Users (In Range)</small>
+                                                    <h3 id="range-users">0</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Interactions</small>
+                                                    <h3 id="range-tracks">0</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Avg. Stay Time</small>
+                                                    <h3 id="range-time">0s</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: 活跃时段 + 地区分布 -->
+                                    <div class="row">
+                                        <div class="col-lg-8">
+                                            <div class="card">
+                                                <div class="card-header">⏰ 活跃时段热力 (Hourly Activity)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container">
+                                                        <canvas id="rangeHourlyChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="card">
+                                                <div class="card-header">📍 地区分布 (Geo)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container">
+                                                        <canvas id="rangeGeoChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: 热门组件 (新增) -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header">🔥 热门组件 Top 10 (Popular Components)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container-sm">
+                                                        <canvas id="rangeTargetChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ================= PANEL 2: 总览 ================= -->
+                                <div
+                                    class="tab-pane fade" id="total-pane">
+                                    <!-- KPI Row -->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Total Users</small>
+                                                    <h3 id="total-users">0</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Total Views</small>
+                                                    <h3 id="total-tracks">0</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card kpi-card">
+                                                <div class="card-body">
+                                                    <small>Avg Time (All)</small>
+                                                    <h3 id="total-time">0s</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Trend -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header">📈 历史访问趋势 (All Time Trend)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container">
+                                                        <canvas id="totalTimelineChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Targets & Geo -->
+                                    <div class="row">
+                                        <div class="col-lg-7">
+                                            <div class="card">
+                                                <div class="card-header">🎯 组件总榜 (All Time Targets)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container-sm">
+                                                        <canvas id="totalTargetChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5">
+                                            <div class="card">
+                                                <div class="card-header">🌍 地区总览 (Total Geo)</div>
+                                                <div class="card-body">
+                                                    <div class="chart-container-sm">
+                                                        <canvas id="totalGeoChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                        <script>
+                            // --- Config & Utils ---
+                            Chart.defaults.color = '#94a3b8';
+                            Chart.defaults.font.family = "'Inter', sans-serif";
+                            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+
+                            const API_TOKEN = "WPWix32CBJpLYAKiHYsx";
+                            const apiBase = '/api/stats';
+                            let charts = {};
+
+                            function formatTime(ms) {
+                                if (! ms) 
+                                    return '0s';
+                                
 
 
-            charts[id] = new Chart(ctx, {type, data, options: finalOptions});
-        }
-
-        // --- 1. 加载【区间视图】数据 ---
-        async function loadRangeData() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const query = `?startDate=${start}&endDate=${end}`;
-
-            // KPI
-            const overview = await fetchData(`daily/overview${query}`);
-            if (overview) {
-                document.getElementById('range-users').innerText = overview.active_users;
-                document.getElementById('range-tracks').innerText = overview.total_interactions;
-                document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
-            }
-
-            // Hourly (Line)
-            const hourly = await fetchData(`daily/hourly${query}`);
-            if (hourly) {
-                const hours = Array.from({
-                    length: 24
-                }, (_, i) => i);
-                const dataMap = {};
-                hourly.forEach(d => dataMap[d._id] = d.count);
-
-                const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
-                gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
-
-                renderChart('rangeHourlyChart', 'line', {
-                    labels: hours.map(h => `${h}:00`),
-                    datasets: [
-                        {
-                            label: 'Interactions',
-                            data: hours.map(h => dataMap[h] || 0),
-                            borderColor: '#f59e0b',
-                            backgroundColor: gradient,
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                });
-            }
-
-            // Geo (Bar)
-            const geo = await fetchData(`daily/geolocation${query}`);
-            if (geo) {
-                renderChart('rangeGeoChart', 'bar', {
-                    labels: geo.map(d => d._id),
-                    datasets: [
-                        {
-                            label: 'Views',
-                            data: geo.map(d => d.count),
-                            backgroundColor: '#10b981',
-                            borderRadius: 4
-                        }
-                    ]
-                });
-            }
-
-            // Targets (Horizontal Bar) - 新增
-            const targets = await fetchData(`daily/targets${query}`);
-            if (targets) {
-                renderChart('rangeTargetChart', 'bar', {
-                    labels: targets.map(d => d._id),
-                    datasets: [
-                        {
-                            label: 'Clicks',
-                            data: targets.map(d => d.count),
-                            backgroundColor: '#8b5cf6',
-                            borderRadius: 4
-                        }
-                    ]
-                }, {indexAxis: 'y'});
-            }
-        }
-
-        // --- 2. 加载【总览】数据 ---
-        async function loadTotalData() {
-            const ov = await fetchData('overview');
-            const time = await fetchData('staytime');
-            if (ov) {
-                document.getElementById('total-users').innerText = ov.total_users;
-                document.getElementById('total-tracks').innerText = ov.total_tracks;
-            }
-            if (time) 
-                document.getElementById('total-time').innerText = formatTime(time);
-            
-
-
-            // Timeline Trend (修复直线问题)
-            const timeline = await fetchData('timeline');
-            if (timeline) {
-                const ctx = document.getElementById('totalTimelineChart').getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-                gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-                renderChart('totalTimelineChart', 'line', {
-                    labels: timeline.map(d => d._id),
-                    datasets: [
-                        {
-                            label: 'Visits',
-                            data: timeline.map(d => d.count),
-                            borderColor: '#3b82f6',
-                            backgroundColor: gradient,
-                            fill: true,
-                            tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
-                        }
-                    ]
-                }, {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
-                            grid: {
-                                color: 'rgba(255,255,255,0.05)'
+                                return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
                             }
-                        }
-                    }
-                });
-            }
 
-            // Total Targets
-            const targets = await fetchData('targets');
-            if (targets) {
-                renderChart('totalTargetChart', 'bar', {
-                    labels: targets.map(d => d._id),
-                    datasets: [
-                        {
-                            data: targets.map(d => d.count),
-                            backgroundColor: '#8b5cf6',
-                            borderRadius: 4
-                        }
-                    ]
-                }, {indexAxis: 'y'});
-            }
+                            function updateClock() {
+                                const now = new Date();
+                                document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
+                                document.getElementById('clock-date').innerText = now.toLocaleDateString();
+                            }
+                            setInterval(updateClock, 1000);
+                            updateClock();
 
-            // Total Geo (修复: 移除背景线条)
-            const geo = await fetchData('geolocation');
-            if (geo) {
-                renderChart('totalGeoChart', 'doughnut', {
-                    labels: geo.map(d => d._id),
-                    datasets: [
-                        {
-                            data: geo.map(d => d.count),
-                            backgroundColor: [
-                                '#3b82f6',
-                                '#8b5cf6',
-                                '#10b981',
-                                '#f59e0b',
-                                '#ef4444'
-                            ],
-                            borderWidth: 0
-                        }
-                    ]
-                }, {
-                    scales: {
-                        x: {
-                            display: false
-                        },
-                        y: {
-                            display: false
-                        }
-                    }, // 强制隐藏坐标轴
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'right'
-                        }
-                    }
-                });
-            }
-        }
+                            // 日期重置逻辑
+                            function resetToToday() {
+                                const today = new Date().toISOString().split('T')[0];
+                                document.getElementById('startDate').value = today;
+                                document.getElementById('endDate').value = today;
+                                loadRangeData(); // 立即查询
+                            }
 
-        // Tab 监听 (懒加载)
-        const totalTabBtn = document.getElementById('total-tab');
-        totalTabBtn.addEventListener('shown.bs.tab', () => {
-            loadTotalData();
-            window.dispatchEvent(new Event('resize'));
-        }, {once: true});
+                            // 初始化: 默认选择今天
+                            resetToToday();
 
-        // 监听所有 Tab 切换以修正图表尺寸
-        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
-            el.addEventListener('shown.bs.tab', () => {
-                window.dispatchEvent(new Event('resize'));
-            });
-        });
-    </script>
-</body></html>
+                            async function fetchData(endpoint) {
+                                try {
+                                    const res = await fetch(`${apiBase}/${endpoint}`, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Authorization': API_TOKEN, // 必须携带这个头
+                                            'Content-Type': 'application/json'
+                                        }
+                                    });
+                                    const json = await res.json();
+                                    return json.success ? json.data : null;
+                                } catch (e) {
+                                    console.error(e);
+                                    return null;
+                                }
+                            }
+
+                            // 核心渲染函数
+                            function renderChart(id, type, data, options = {}) {
+                                const ctx = document.getElementById(id).getContext('2d');
+                                if (charts[id]) 
+                                    charts[id].destroy();
+                                
+
+
+                                // 默认配置
+                                const defaultOptions = {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: {
+                                                display: false
+                                            }
+                                        }, // 默认隐藏X网格
+                                        y: {
+                                            grid: {
+                                                color: 'rgba(255,255,255,0.05)'
+                                            },
+                                            beginAtZero: true
+                                        }
+                                    }
+                                };
+
+                                // 深度合并配置 (简单版)
+                                const finalOptions = {
+                                    ... defaultOptions,
+                                    ...options
+                                };
+                                if (options.scales) 
+                                    finalOptions.scales = {
+                                        ... defaultOptions.scales,
+                                        ...options.scales
+                                    };
+                                
+
+
+                                if (options.plugins) 
+                                    finalOptions.plugins = {
+                                        ... defaultOptions.plugins,
+                                        ...options.plugins
+                                    };
+                                
+
+
+                                charts[id] = new Chart(ctx, {type, data, options: finalOptions});
+                            }
+
+                            // --- 1. 加载【区间视图】数据 ---
+                            async function loadRangeData() {
+                                const start = document.getElementById('startDate').value;
+                                const end = document.getElementById('endDate').value;
+                                const query = `?startDate=${start}&endDate=${end}`;
+
+                                // KPI
+                                const overview = await fetchData(`daily/overview${query}`);
+                                if (overview) {
+                                    document.getElementById('range-users').innerText = overview.active_users;
+                                    document.getElementById('range-tracks').innerText = overview.total_interactions;
+                                    document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
+                                }
+
+                                // Hourly (Line)
+                                const hourly = await fetchData(`daily/hourly${query}`);
+                                if (hourly) {
+                                    const hours = Array.from({
+                                        length: 24
+                                    }, (_, i) => i);
+                                    const dataMap = {};
+                                    hourly.forEach(d => dataMap[d._id] = d.count);
+
+                                    const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
+                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                                    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
+                                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+                                    renderChart('rangeHourlyChart', 'line', {
+                                        labels: hours.map(h => `${h}:00`),
+                                        datasets: [
+                                            {
+                                                label: 'Interactions',
+                                                data: hours.map(h => dataMap[h] || 0),
+                                                borderColor: '#f59e0b',
+                                                backgroundColor: gradient,
+                                                fill: true,
+                                                tension: 0.4
+                                            }
+                                        ]
+                                    });
+                                }
+
+                                // Geo (Bar)
+                                const geo = await fetchData(`daily/geolocation${query}`);
+                                if (geo) {
+                                    renderChart('rangeGeoChart', 'bar', {
+                                        labels: geo.map(d => d._id),
+                                        datasets: [
+                                            {
+                                                label: 'Views',
+                                                data: geo.map(d => d.count),
+                                                backgroundColor: '#10b981',
+                                                borderRadius: 4
+                                            }
+                                        ]
+                                    });
+                                }
+
+                                // Targets (Horizontal Bar) - 新增
+                                const targets = await fetchData(`daily/targets${query}`);
+                                if (targets) {
+                                    renderChart('rangeTargetChart', 'bar', {
+                                        labels: targets.map(d => d._id),
+                                        datasets: [
+                                            {
+                                                label: 'Clicks',
+                                                data: targets.map(d => d.count),
+                                                backgroundColor: '#8b5cf6',
+                                                borderRadius: 4
+                                            }
+                                        ]
+                                    }, {indexAxis: 'y'});
+                                }
+                            }
+
+                            // --- 2. 加载【总览】数据 ---
+                            async function loadTotalData() {
+                                const ov = await fetchData('overview');
+                                const time = await fetchData('staytime');
+                                if (ov) {
+                                    document.getElementById('total-users').innerText = ov.total_users;
+                                    document.getElementById('total-tracks').innerText = ov.total_tracks;
+                                }
+                                if (time) 
+                                    document.getElementById('total-time').innerText = formatTime(time);
+                                
+
+
+                                // Timeline Trend (修复直线问题)
+                                const timeline = await fetchData('timeline');
+                                if (timeline) {
+                                    const ctx = document.getElementById('totalTimelineChart').getContext('2d');
+                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+                                    renderChart('totalTimelineChart', 'line', {
+                                        labels: timeline.map(d => d._id),
+                                        datasets: [
+                                            {
+                                                label: 'Visits',
+                                                data: timeline.map(d => d.count),
+                                                borderColor: '#3b82f6',
+                                                backgroundColor: gradient,
+                                                fill: true,
+                                                tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
+                                            }
+                                        ]
+                                    }, {
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
+                                                grid: {
+                                                    color: 'rgba(255,255,255,0.05)'
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+
+                                // Total Targets
+                                const targets = await fetchData('targets');
+                                if (targets) {
+                                    renderChart('totalTargetChart', 'bar', {
+                                        labels: targets.map(d => d._id),
+                                        datasets: [
+                                            {
+                                                data: targets.map(d => d.count),
+                                                backgroundColor: '#8b5cf6',
+                                                borderRadius: 4
+                                            }
+                                        ]
+                                    }, {indexAxis: 'y'});
+                                }
+
+                                // Total Geo (修复: 移除背景线条)
+                                const geo = await fetchData('geolocation');
+                                if (geo) {
+                                    renderChart('totalGeoChart', 'doughnut', {
+                                        labels: geo.map(d => d._id),
+                                        datasets: [
+                                            {
+                                                data: geo.map(d => d.count),
+                                                backgroundColor: [
+                                                    '#3b82f6',
+                                                    '#8b5cf6',
+                                                    '#10b981',
+                                                    '#f59e0b',
+                                                    '#ef4444'
+                                                ],
+                                                borderWidth: 0
+                                            }
+                                        ]
+                                    }, {
+                                        scales: {
+                                            x: {
+                                                display: false
+                                            },
+                                            y: {
+                                                display: false
+                                            }
+                                        }, // 强制隐藏坐标轴
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'right'
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+
+                            // Tab 监听 (懒加载)
+                            const totalTabBtn = document.getElementById('total-tab');
+                            totalTabBtn.addEventListener('shown.bs.tab', () => {
+                                loadTotalData();
+                                window.dispatchEvent(new Event('resize'));
+                            }, {once: true});
+
+                            // 监听所有 Tab 切换以修正图表尺寸
+                            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
+                                el.addEventListener('shown.bs.tab', () => {
+                                    window.dispatchEvent(new Event('resize'));
+                                });
+                            });
+                        </script>
+                    </body>
+                </html>
+            </body>
