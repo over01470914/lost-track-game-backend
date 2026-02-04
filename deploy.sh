@@ -1,37 +1,39 @@
 #!/bin/bash
 
 # 部署脚本
-
 echo "=== 末日火车游戏网站部署脚本 ==="
-echo ""
 
-# 检查Node.js是否安装
+# 1. 环境检查
 if ! command -v node &> /dev/null; then
-    echo "错误: Node.js 未安装，请先安装 Node.js 14+"
+    echo "错误: Node.js 未安装"
     exit 1
 fi
 
-# 检查npm是否安装
-if ! command -v npm &> /dev/null; then
-    echo "错误: npm 未安装，请先安装 npm"
-    exit 1
+# 检查 PM2
+if ! command -v pm2 &> /dev/null; then
+    echo "正在安装 PM2..."
+    npm install pm2 -g
 fi
 
-# 检查MongoDB是否安装
-if ! command -v mongod &> /dev/null; then
-    echo "警告: MongoDB 未安装，请先安装 MongoDB"
-    echo "否则打点功能将无法正常工作"
-fi
-
-echo ""
-echo "=== 安装项目依赖 ==="
+# 2. 安装依赖
+echo "=== 正在安装/更新依赖 ==="
 npm install
 
-echo ""
-echo "=== 启动服务 ==="
-echo "请在浏览器中访问 https://dashboard.lost-track-game.com"
-echo ""
+# 3. 启动/重启服务
+echo "=== 正在启动 PM2 服务 ==="
+# 尝试停止旧服务，防止端口占用，如果不存在也不报错
+pm2 stop lost-track-backend 2>/dev/null || true
+pm2 delete lost-track-backend 2>/dev/null || true
 
-# 启动服务
-pm2 start npm
-pm2 startup && pm2 save
+# 启动新服务
+# --name 指定进程名称，方便管理
+# server/index.js 是入口文件
+pm2 start server/index.js --name "lost-track-backend"
+
+# 4. 保存状态
+pm2 save
+
+echo ""
+echo "=== 部署成功 ==="
+echo "服务已在后台运行。可以使用 'pm2 logs lost-track-backend' 查看日志。"
+echo "访问地址: https://dashboard.lost-track-game.com"
