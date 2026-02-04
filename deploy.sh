@@ -33,4 +33,5 @@ echo "请在浏览器中访问 https://dashboard.lost-track-game.com"
 echo ""
 
 # 启动服务
-npm start
+pm2 start npm
+pm2 startup && pm2 save
