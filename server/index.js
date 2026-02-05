@@ -88,11 +88,22 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // 权限校验中间件
 const authGuard = (req, res, next) => {
-  const clientToken = req.headers["authorization"];
+  // 同时支持 X-Admin-Token 和 Authorization，优先读 X-Admin-Token
+  // 注意：Express headers 都是小写的
+  const clientToken =
+    req.headers["x-admin-token"] || req.headers["authorization"];
+
+  // 打印日志方便调试
+  if (clientToken !== ADMIN_TOKEN) {
+    console.warn(
+      `[Auth] Failed. IP: ${req.ip}, Token received: ${clientToken}`
+    );
+  }
+
   if (clientToken === ADMIN_TOKEN) {
     next();
   } else {
-    console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
+    // 确保返回 403
     res
       .status(403)
       .json({ success: false, error: "Access Denied: Unauthorized" });

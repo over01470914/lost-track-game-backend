@@ -755,8 +755,9 @@
                                                     console.log("[Debug] 开始向 /api/admin/config 发送请求...");
                                                     const res = await fetch('/api/admin/config', {
                                                         headers: {
-                                                            'Authorization': API_TOKEN
+                                                            'X-Admin-Token': API_TOKEN
                                                         }
+
                                                     });
 
                                                     console.log("[Debug] 服务器响应状态码 (Status):", res.status);
@@ -855,7 +856,7 @@
                                                     const res = await fetch('/api/admin/config', {
                                                         method: 'POST',
                                                         headers: {
-                                                            'Authorization': API_TOKEN,
+                                                            'X-Admin-Token': API_TOKEN,
                                                             'Content-Type': 'application/json'
                                                         },
                                                         body: JSON.stringify(
@@ -896,7 +897,7 @@
                                                         const res = await fetch('/api/admin/test-email', {
                                                             method: 'POST',
                                                             headers: {
-                                                                'Authorization': API_TOKEN
+                                                                'X-Admin-Token': API_TOKEN
                                                             }
                                                         });
 
