@@ -80,14 +80,20 @@ async function sendEmail(subject, htmlContent) {
     from: `"Analytics Bot" <${cachedConfig.smtp.user}>`,
     to: cachedConfig.receivers.join(", "),
     subject: subject,
-    html: htmlContent,
+    text: "htmlContent",
   };
 
   try {
     console.log("[Hook] Transporter created with:", transporterContent);
     console.log("[Hook] Mail options:", mailOptions);
 
-    await transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.error("[Hook] Failed to send email:", error);
+      } else {
+        console.log(`[Hook] Email sent successfully. ID: ${info.messageId}`);
+      }
+    });
 
     console.log(`[Hook] Email sent successfully.`);
   } catch (error) {
