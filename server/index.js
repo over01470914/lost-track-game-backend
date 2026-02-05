@@ -157,7 +157,7 @@ async function getIPGeolocation(ip) {
 }
 
 // 3. 管理员接口：增加 authGuard 保护
-app.use("/api/admin", authGuard);
+app.use("/api/admin");
 
 // 重置数据库接口
 app.delete("/api/admin/reset", async (req, res) => {
