@@ -38,6 +38,8 @@ const ReportSnapshotSchema = new mongoose.Schema({
   },
 });
 
+const ReportSnapshot = mongoose.model("ReportSnapshot", ReportSnapshotSchema);
+
 // ==========================================
 // 2. 状态管理
 // ==========================================
