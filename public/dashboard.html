@@ -742,6 +742,10 @@
 
                                                 // 2. 从后端加载配置
                                                 async function loadConfig() {
+                                                    // 只有在没加载过的情况下才去请求，或者你希望每次切换都刷新也可以去掉这个 if
+                                                    // 但为了体验顺滑，建议保留这个 check，或者在保存成功后重置它
+                                                    // if (configLoaded) return;
+
                                                     try {
                                                         const res = await fetch('/api/admin/config', {
                                                             headers: {
@@ -749,9 +753,9 @@
                                                             }
                                                         });
 
-                                                        // 如果 403 (Token错误)，直接退出，不弹窗，也不报错
+                                                        // 如果权限不足 (403)，直接结束，不弹窗，不打扰用户
                                                         if (res.status === 403) {
-                                                            console.warn("Silent load failed: Unauthorized. Waiting for user action on Save.");
+                                                            console.warn("[Silent Load] Token invalid or unauthorized. Waiting for manual update.");
                                                             return;
                                                         }
 
@@ -762,10 +766,12 @@
 
                                                             // 填充数据
                                                             document.getElementById('smtpHost').value = conf.smtp.host || "";
-                                                            document.getElementById('smtpPort').value = conf.smtp.port || 587;
+                                                            document.getElementById('smtpPort').value = conf.smtp.port || 465;
                                                             document.getElementById('smtpUser').value = conf.smtp.user || "";
+                                                            // 密码通常不回显，或者只显示占位符
                                                             document.getElementById('smtpPass').value = conf.smtp.pass || "";
 
+                                                            // 填充接收人
                                                             const rContainer = document.getElementById('receivers-container');
                                                             rContainer.innerHTML = '';
                                                             if (conf.receivers && conf.receivers.length > 0) {
@@ -774,6 +780,7 @@
                                                                 addReceiverField();
                                                             }
 
+                                                            // 填充时间
                                                             const tContainer = document.getElementById('times-container');
                                                             tContainer.innerHTML = '';
                                                             if (conf.report_times && conf.report_times.length > 0) {
@@ -782,11 +789,11 @@
                                                                 addTimeField("12:00");
                                                             }
 
-                                                            // [新增] 标记加载成功
+                                                            // 标记加载成功
                                                             configLoaded = true;
                                                         }
-                                                    } catch (e) {
-                                                        console.warn("Silent load failed (Network error or other).");
+                                                    } catch (e) { // 网络错误也不弹窗，仅记录日志
+                                                        console.warn("[Silent Load] Failed to load config:", e);
                                                     }
                                                 }
 
@@ -903,7 +910,7 @@
 
                                                 // [新增] 处理权限不足的通用函数
                                                 async function handleAuthFailure(retryCallback) {
-                                                    const newToken = prompt("🔒 Access Denied (权限不足)\n\nPlease enter the Admin Token:");
+                                                    const newToken = prompt("🔒 权限验证失败 (Access Denied)\n\n请输入 Admin Token 继续:");
                                                     if (newToken) {
                                                         API_TOKEN = newToken;
                                                         localStorage.setItem('admin_token', newToken);
