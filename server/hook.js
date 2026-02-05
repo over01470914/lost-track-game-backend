@@ -64,10 +64,12 @@ async function sendEmail(subject, htmlContent) {
     return;
   }
 
+  const isSecure = cachedConfig.smtp.port === 465;
+
   const transporterContent = {
     host: cachedConfig.smtp.host,
     port: cachedConfig.smtp.port,
-    secure: cachedConfig.smtp.secure,
+    secure: isSecure,
     auth: {
       user: cachedConfig.smtp.user,
       pass: cachedConfig.smtp.pass,
@@ -80,24 +82,29 @@ async function sendEmail(subject, htmlContent) {
     from: `"Analytics Bot" <${cachedConfig.smtp.user}>`,
     to: cachedConfig.receivers.join(", "),
     subject: subject,
-    text: "htmlContent",
+    html: htmlContent,
   };
 
   try {
     console.log("[Hook] Transporter created with:", transporterContent);
     console.log("[Hook] Mail options:", mailOptions);
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.error("[Hook] Failed to send email:", error);
-      } else {
-        console.log(`[Hook] Email sent successfully. ID: ${info.messageId}`);
-      }
-    });
+    await transporter.sendMail(mailOptions);
 
-    console.log(`[Hook] Email sent successfully.`);
+    console.log(
+      `[Hook] ✅ Email sent successfully! Message ID: ${info.messageId}`
+    );
+    // 如果是腾讯企业邮，通常 info.response 会包含 'Ok'
+    console.log(`[Hook] Server response: ${info.response}`);
   } catch (error) {
-    console.error("[Hook] Failed to send email:", error);
+    console.error("========================================");
+    console.error("[Hook] ❌ Failed to send email.");
+    console.error("Error Message:", error.message);
+    console.error("Error Code:", error.code);
+    console.error("Error Response:", error.response);
+    console.error("========================================");
+    // 这里抛出错误，以便前端能收到 500 错误提示
+    throw error;
   }
 }
 

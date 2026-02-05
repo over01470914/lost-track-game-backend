@@ -806,8 +806,8 @@
                                                     // 收集表单数据
                                                     const smtp = {
                                                         host: document.getElementById('smtpHost').value.trim(),
-                                                        port: parseInt(document.getElementById('smtpPort').value) || 587,
-                                                        secure: false,
+                                                        port: parseInt(document.getElementById('smtpPort').value) || 465,
+                                                        secure: true,
                                                         user: document.getElementById('smtpUser').value.trim(),
                                                         pass: document.getElementById('smtpPass').value.trim()
                                                     };
@@ -868,6 +868,7 @@
                                                     if (! confirmed) 
                                                         return;
                                                     
+
 
                                                     // 2. 定义发送逻辑 (封装以便重试)
                                                     const performTest = async () => {
