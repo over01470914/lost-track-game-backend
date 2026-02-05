@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const config = require("../config/database.js");
 const https = require("https");
+const nodemailer = require("nodemailer");
 
 const rateLimit = require("express-rate-limit");
 
@@ -24,7 +25,20 @@ const port = 3000;
 
 const ADMIN_TOKEN = "WPWix32CBJpLYAKiHYsx";
 
-// Nginx 代理，这样 req.ip 就能直接拿到玩家真实 IP
+// Hook配置
+const HOOK_CONFIG = {
+  email: {
+    recipients: ["mingxun.xie@junkyardgames.com.cn"], // 接收报表的邮箱列表
+    // schedule: "0 */12 * * *", // 每天0点、12点发送
+    schedule: "0 */1 * * * *", // 每一分钟发送一次
+  },
+  alert: {
+    threshold: 2.0, // 增长超过200%触发警告
+    checkInterval: 1 * 60 * 1000, // 每1分钟检查一次
+  },
+};
+
+// Nginx代理，这样 req.ip 就能直接拿到玩家真实 IP
 app.set("trust proxy", true);
 
 // 连接数据库
@@ -76,6 +90,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
@@ -625,6 +640,261 @@ app.get("/api/stats/daily/targets", async (req, res) => {
   }
 });
 
+// ==========================================
+// [Hook功能 1] 比对表格API接口
+// ==========================================
+app.get("/api/hook/comparison", async (req, res) => {
+  try {
+    const { hours = 12 } = req.query;
+    const now = new Date();
+    const previousTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+
+    // 获取当前时间点的数据
+    const currentData = await UserTracking.aggregate([
+      {
+        $group: {
+          _id: null,
+          total_users: { $sum: 1 },
+          total_tracks: { $sum: { $size: "$tracks" } },
+          avg_stay_time: { $avg: "$tracks.stay_time" },
+        },
+      },
+    ]);
+
+    // 获取前一个时间点的数据
+    const previousData = await UserTracking.aggregate([
+      {
+        $match: {
+          updated_at: { $lt: previousTime },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total_users: { $sum: 1 },
+          total_tracks: { $sum: { $size: "$tracks" } },
+          avg_stay_time: { $avg: "$tracks.stay_time" },
+        },
+      },
+
+      { $sort: { updated_at: -1 } },
+      { $limit: 1 },
+    ]);
+
+    // 计算变化
+    const comparison = {
+      current: currentData[0] || {},
+      previous: previousData[0] || {},
+      changes: {},
+    };
+
+    if (
+      comparison.current.total_users !== undefined &&
+      comparison.previous.total_users !== undefined
+    ) {
+      comparison.changes.users =
+        comparison.current.total_users - comparison.previous.total_users;
+      comparison.changes.users_percent = (
+        (comparison.changes.users / comparison.previous.total_users) *
+        100
+      ).toFixed(2);
+    }
+
+    if (
+      comparison.current.total_tracks !== undefined &&
+      comparison.previous.total_tracks !== undefined
+    ) {
+      comparison.changes.tracks =
+        comparison.current.total_tracks - comparison.previous.total_tracks;
+      comparison.changes.tracks_percent = (
+        (comparison.changes.tracks / comparison.previous.total_tracks) *
+        100
+      ).toFixed(2);
+    }
+
+    if (
+      comparison.current.avg_stay_time !== undefined &&
+      comparison.previous.avg_stay_time !== undefined
+    ) {
+      comparison.changes.stay_time =
+        comparison.current.avg_stay_time - comparison.previous.avg_stay_time;
+      comparison.changes.stay_time_percent = (
+        (comparison.changes.stay_time / comparison.previous.avg_stay_time) *
+        100
+      ).toFixed(2);
+    }
+
+    console.log("Comparison data:", comparison);
+    res.status(200).json({ success: true, data: comparison });
+  } catch (error) {
+    console.error("Error getting comparison data:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// ==========================================
+// [Hook功能 2] 定时任务发送报表邮件
+// ==========================================
+const sendEmailReport = async (data) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.example.com", // 需要配置实际的SMTP服务器
+      port: 587,
+      secure: false,
+      auth: {
+        user: "your-email@example.com",
+        pass: "your-password",
+      },
+    });
+
+    const mailOptions = {
+      from: "your-email@example.com",
+      to: HOOK_CONFIG.email.recipients.join(", "),
+      subject: "数据监控报表",
+      html: `
+        <h2>数据比对报表</h2>
+        <p><strong>时间：</strong>${new Date().toLocaleString()}</p>
+        <h3>数据变化</h3>
+        <ul>
+          <li>用户数变化：${data.changes.users} (${data.changes.users_percent}%)</li>
+          <li>交互数变化：${data.changes.tracks} (${data.changes.tracks_percent}%)</li>
+          <li>平均停留时间变化：${data.changes.stay_time}秒 (${data.changes.stay_time_percent}%)</li>
+        </ul>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("Email report sent successfully");
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
+
+// 定时任务：每天0点和12点发送报表
+const scheduleEmailReports = () => {
+  const schedule = HOOK_CONFIG.email.schedule;
+  const [hours, minutes] = schedule.split(" ")[1].split(":").map(Number);
+
+  const checkAndSend = async () => {
+    const now = new Date();
+    if (now.getHours() === hours && now.getMinutes() === minutes) {
+      console.log(
+        `Sending scheduled email report at ${now.toLocaleTimeString()}`
+      );
+
+      // 获取比对数据
+      const response = await fetch(
+        `http://127.0.0.1:${port}/api/hook/comparison?hours=12`
+      );
+      const comparisonData = await response.json();
+
+      if (comparisonData.success) {
+        await sendEmailReport(comparisonData.data);
+      }
+    }
+  };
+
+  // 每分钟检查一次是否到了发送时间
+  setInterval(checkAndSend, 60 * 1000);
+};
+
+// ==========================================
+// [Hook功能 3] 数据暴增监控和警告
+// ==========================================
+let previousStats = null;
+const checkForAnomalies = async () => {
+  try {
+    // 获取当前统计数据
+    const currentStats = await UserTracking.aggregate([
+      {
+        $group: {
+          _id: null,
+          total_users: { $sum: 1 },
+          total_tracks: { $sum: { $size: "$tracks" } },
+          avg_stay_time: { $avg: "$tracks.stay_time" },
+        },
+      },
+    ]);
+
+    const current = currentStats[0] || {};
+
+    if (previousStats) {
+      const previous = previousStats;
+      const threshold = HOOK_CONFIG.alert.threshold;
+
+      // 检查用户数暴增
+      const userGrowth =
+        (current.total_users - previous.total_users) / previous.total_users;
+      if (userGrowth > threshold) {
+        console.warn(
+          `User count anomaly detected: ${userGrowth.toFixed(2)}% growth`
+        );
+
+        // 发送警告邮件
+        await sendEmailReport({
+          changes: {
+            users: current.total_users - previous.total_users,
+            users_percent: userGrowth.toFixed(2),
+            tracks: current.total_tracks - previous.total_tracks,
+            tracks_percent: (
+              ((current.total_tracks - previous.total_tracks) /
+                previous.total_tracks) *
+              100
+            ).toFixed(2),
+            stay_time: current.avg_stay_time - previous.avg_stay_time,
+            stay_time_percent: (
+              ((current.avg_stay_time - previous.avg_stay_time) /
+                previous.avg_stay_time) *
+              100
+            ).toFixed(2),
+          },
+          type: "warning",
+          message: `检测到用户数暴增：${userGrowth.toFixed(2)}%`,
+        });
+      }
+
+      // 检查交互数暴增
+      const trackGrowth =
+        (current.total_tracks - previous.total_tracks) / previous.total_tracks;
+      if (trackGrowth > threshold) {
+        console.warn(
+          `Track count anomaly detected: ${trackGrowth.toFixed(2)}% growth`
+        );
+
+        // 发送警告邮件
+        await sendEmailReport({
+          changes: {
+            users: current.total_users - previous.total_users,
+            users_percent: (
+              ((current.total_users - previous.total_users) /
+                previous.total_users) *
+              100
+            ).toFixed(2),
+            tracks: current.total_tracks - previous.total_tracks,
+            tracks_percent: trackGrowth.toFixed(2),
+            stay_time: current.avg_stay_time - previous.avg_stay_time,
+            stay_time_percent: (
+              ((current.avg_stay_time - previous.avg_stay_time) /
+                previous.avg_stay_time) *
+              100
+            ).toFixed(2),
+          },
+          type: "warning",
+          message: `检测到交互数暴增：${trackGrowth.toFixed(2)}%`,
+        });
+      }
+    }
+
+    // 更新上一次的统计数据
+    previousStats = current;
+  } catch (error) {
+    console.error("Error checking for anomalies:", error);
+  }
+};
+
+// 每5分钟检查一次数据异常
+setInterval(checkForAnomalies, HOOK_CONFIG.alert.checkInterval);
+
 // 处理所有其他请求，返回404错误
 app.get("*", (req, res) => {
   res.status(404).json({ success: false, error: "Not found" });
@@ -634,4 +904,8 @@ app.get("*", (req, res) => {
 // 这样即便防火墙失效，公网 IP:3000 也无法建立连接，只有服务器内部的 Nginx 能访问
 app.listen(port, "127.0.0.1", () => {
   console.log(`Server running internally on port: ${port}`);
+
+  // 启动定时任务
+  scheduleEmailReports();
+  console.log("Email report scheduler started");
 });
