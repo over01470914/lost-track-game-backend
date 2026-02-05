@@ -64,7 +64,7 @@ async function sendEmail(subject, htmlContent) {
     return;
   }
 
-  const transporter = nodemailer.createTransport({
+  const transporterContent = {
     host: cachedConfig.smtp.host,
     port: cachedConfig.smtp.port,
     secure: cachedConfig.smtp.secure,
@@ -72,16 +72,24 @@ async function sendEmail(subject, htmlContent) {
       user: cachedConfig.smtp.user,
       pass: cachedConfig.smtp.pass,
     },
-  });
+  };
+
+  const transporter = nodemailer.createTransport(transporterContent);
+
+  const mailOptions = {
+    from: `"Analytics Bot" <${cachedConfig.smtp.user}>`,
+    to: cachedConfig.receivers.join(", "),
+    subject: subject,
+    html: htmlContent,
+  };
 
   try {
-    await transporter.sendMail({
-      from: `"Analytics Bot" <${cachedConfig.smtp.user}>`,
-      to: cachedConfig.receivers.join(", "),
-      subject: subject,
-      html: htmlContent,
-    });
-    console.log(`[Hook] Email sent: ${subject}`);
+    console.log("[Hook] Transporter created with:", transporterContent);
+    console.log("[Hook] Mail options:", mailOptions);
+
+    await transporter.sendMail(mailOptions);
+
+    console.log(`[Hook] Email sent successfully.`);
   } catch (error) {
     console.error("[Hook] Failed to send email:", error);
   }
