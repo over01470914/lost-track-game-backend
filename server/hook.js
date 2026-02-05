@@ -278,7 +278,7 @@ const initHooks = (app, userTrackingModel, authGuard) => {
   UserTracking = userTrackingModel;
 
   // 注册路由 (挂载在 /api/admin 下)
-  app.use("/api/admin", authGuard, router);
+  app.use("/api/admin", router);
 
   // 启动后台任务
   mongoose.connection.once("open", () => {
