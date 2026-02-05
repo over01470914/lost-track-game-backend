@@ -89,11 +89,12 @@ async function sendEmail(subject, htmlContent) {
     console.log("[Hook] Transporter created with:", transporterContent);
     console.log("[Hook] Mail options:", mailOptions);
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
 
     console.log(
       `[Hook] ✅ Email sent successfully! Message ID: ${info.messageId}`
     );
+
     // 如果是腾讯企业邮，通常 info.response 会包含 'Ok'
     console.log(`[Hook] Server response: ${info.response}`);
   } catch (error) {
