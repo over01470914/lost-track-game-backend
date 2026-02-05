@@ -337,631 +337,631 @@
                                 <!-- ================= PANEL 3: 设置 (Settings) ================= -->
                                 <div class="tab-pane fade" id="settings-pane">
                                     <div class="row justify-content-center">
-                                        <div
-                                            class="col-lg-8">
+                                        <div class="col-lg-8"></div>
 
-                                            <!-- 1. SMTP 邮件服务器配置 -->
-                                            <div class="card mb-4">
-                                                <div class="d-flex justify-content-end mb-3">
-                                                    <button class="btn btn-sm btn-outline-info" onclick="requestTokenAndReload()">
-                                                        🔄 Reload / Change Token
-                                                    </button>
-                                                </div>
+                                        <div class="d-flex justify-content-end mb-3">
+                                            <button class="btn btn-sm btn-outline-info" onclick="requestTokenAndReload()">
+                                                🔄 Reload / Change Token
+                                            </button>
+                                        </div>
 
-                                                <div class="card-header text-primary bg-primary bg-opacity-10 border-0">
-                                                    📧 邮件发送配置 (Sender / SMTP Config)
-                                                </div>
-                                                <div class="card-body">
-                                                    <form id="smtpForm">
-                                                        <div class="row g-3">
-                                                            <div class="col-md-8">
-                                                                <label class="form-label text-muted">SMTP Host</label>
-                                                                <input type="text" class="form-control bg-dark text-white border-secondary" id="smtpHost" placeholder="e.g. smtp.gmail.com"></div>
-                                                                <div class="col-md-4">
-                                                                    <label class="form-label text-muted">Port</label>
-                                                                    <input type="number" class="form-control bg-dark text-white border-secondary" id="smtpPort" placeholder="587"></div>
+                                        <!-- 1. SMTP 邮件服务器配置 -->
+                                        <div class="card mb-4">
+                                            <div class="card-header text-primary bg-primary bg-opacity-10 border-0">
+                                                📧 邮件发送配置 (Sender / SMTP Config)
+                                            </div>
+                                            <div class="card-body">
+                                                <form id="smtpForm">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-8">
+                                                            <label class="form-label text-muted">SMTP Host</label>
+                                                            <input type="text" class="form-control bg-dark text-white border-secondary" id="smtpHost" placeholder="e.g. smtp.gmail.com"></div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label text-muted">Port</label>
+                                                                <input type="number" class="form-control bg-dark text-white border-secondary" id="smtpPort" placeholder="587"></div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label text-muted">Username (Email)</label>
+                                                                    <input type="email" class="form-control bg-dark text-white border-secondary" id="smtpUser" placeholder="sender@example.com"></div>
                                                                     <div class="col-md-6">
-                                                                        <label class="form-label text-muted">Username (Email)</label>
-                                                                        <input type="email" class="form-control bg-dark text-white border-secondary" id="smtpUser" placeholder="sender@example.com"></div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="form-label text-muted">Password (App Password)</label>
-                                                                            <input type="password" class="form-control bg-dark text-white border-secondary" id="smtpPass" placeholder="******">
-                                                                                <div class="form-text text-secondary">
-                                                                                    Use "App Password" if using Gmail/Outlook (Recommended).
-                                                                                </div>
+                                                                        <label class="form-label text-muted">Password (App Password)</label>
+                                                                        <input type="password" class="form-control bg-dark text-white border-secondary" id="smtpPass" placeholder="******">
+                                                                            <div class="form-text text-secondary">
+                                                                                Use "App Password" if using Gmail/Outlook (Recommended).
                                                                             </div>
                                                                         </div>
-                                                                    </form>
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- 2. 接收人 & 调度时间配置 -->
-                                                            <div class="card mb-4">
-                                                                <div class="card-header text-success bg-success bg-opacity-10 border-0">
-                                                                    📨 接收人与调度 (Receivers & Schedule)
-                                                                </div>
-                                                                <div
-                                                                    class="card-body">
-
-                                                                    <!-- 接收人列表 -->
-                                                                    <label class="form-label text-muted fw-bold">Receiver Emails</label>
-                                                                    <div
-                                                                        id="receivers-container" class="mb-3"><!-- JS 动态生成输入框 -->
                                                                     </div>
-                                                                    <button class="btn btn-sm btn-outline-secondary mb-4" onclick="addReceiverField()">
-                                                                        + Add Receiver
-                                                                    </button>
-
-                                                                    <hr
-                                                                        class="border-secondary opacity-25">
-
-                                                                        <!-- 发送时间列表 -->
-                                                                        <label class="form-label text-muted fw-bold">Report Schedule Times (Daily)</label>
-                                                                        <div
-                                                                            id="times-container" class="mb-3"><!-- JS 动态生成输入框 -->
-                                                                        </div>
-                                                                        <button class="btn btn-sm btn-outline-secondary" onclick="addTimeField()">
-                                                                            + Add Time
-                                                                        </button>
-
-                                                                    </div>
-                                                                </div>
-
-                                                                <!-- 3. 操作按钮 -->
-                                                                <div class="d-flex gap-3 mb-5">
-                                                                    <button class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="saveConfig()">
-                                                                        💾 Save Configuration
-                                                                    </button>
-                                                                    <button class="btn btn-outline-warning fw-bold" onclick="testEmail()">
-                                                                        🧪 Send Test Email
-                                                                    </button>
-                                                                </div>
-
+                                                                </form>
                                                             </div>
                                                         </div>
+
+                                                        <!-- 2. 接收人 & 调度时间配置 -->
+                                                        <div class="card mb-4">
+                                                            <div class="card-header text-success bg-success bg-opacity-10 border-0">
+                                                                📨 接收人与调度 (Receivers & Schedule)
+                                                            </div>
+                                                            <div
+                                                                class="card-body">
+
+                                                                <!-- 接收人列表 -->
+                                                                <label class="form-label text-muted fw-bold">Receiver Emails</label>
+                                                                <div
+                                                                    id="receivers-container" class="mb-3"><!-- JS 动态生成输入框 -->
+                                                                </div>
+                                                                <button class="btn btn-sm btn-outline-secondary mb-4" onclick="addReceiverField()">
+                                                                    + Add Receiver
+                                                                </button>
+
+                                                                <hr
+                                                                    class="border-secondary opacity-25">
+
+                                                                    <!-- 发送时间列表 -->
+                                                                    <label class="form-label text-muted fw-bold">Report Schedule Times (Daily)</label>
+                                                                    <div
+                                                                        id="times-container" class="mb-3"><!-- JS 动态生成输入框 -->
+                                                                    </div>
+                                                                    <button class="btn btn-sm btn-outline-secondary" onclick="addTimeField()">
+                                                                        + Add Time
+                                                                    </button>
+
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- 3. 操作按钮 -->
+                                                            <div class="d-flex gap-3 mb-5">
+                                                                <button class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="saveConfig()">
+                                                                    💾 Save Configuration
+                                                                </button>
+                                                                <button class="btn btn-outline-warning fw-bold" onclick="testEmail()">
+                                                                    🧪 Send Test Email
+                                                                </button>
+                                                            </div>
+
+                                                        </div>
                                                     </div>
-
-
                                                 </div>
+
+
                                             </div>
+                                        </div>
 
-                                            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                                            <script>
-                                                // --- Config & Utils ---
-                                                Chart.defaults.color = '#94a3b8';
-                                                Chart.defaults.font.family = "'Inter', sans-serif";
-                                                Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+                                        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                                        <script>
+                                            // --- Config & Utils ---
+                                            Chart.defaults.color = '#94a3b8';
+                                            Chart.defaults.font.family = "'Inter', sans-serif";
+                                            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
 
-                                                // [修改] 将 const 改为 let，并优先读取 localStorage
-                                                let API_TOKEN = localStorage.getItem('admin_token') || "WPWix32CBJpLYAKiHYsx";
-                                                const apiBase = '/api/stats';
-                                                let configLoaded = false; // [新增] 标记配置是否加载成功，防止覆盖空数据
-                                                let charts = {};
+                                            // [修改] 将 const 改为 let，并优先读取 localStorage
+                                            let API_TOKEN = localStorage.getItem('admin_token') || "WPWix32CBJpLYAKiHYsx";
+                                            const apiBase = '/api/stats';
+                                            let configLoaded = false; // [新增] 标记配置是否加载成功，防止覆盖空数据
+                                            let charts = {};
 
-                                                function formatTime(ms) {
-                                                    if (! ms) 
-                                                        return '0s';
-                                                    
+                                            function formatTime(ms) {
+                                                if (! ms) 
+                                                    return '0s';
+                                                
 
 
-                                                    return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
+                                                return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
+                                            }
+
+                                            function updateClock() {
+                                                const now = new Date();
+                                                document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
+                                                document.getElementById('clock-date').innerText = now.toLocaleDateString();
+                                            }
+                                            setInterval(updateClock, 1000);
+                                            updateClock();
+
+                                            // 日期重置逻辑
+                                            function resetToToday() {
+                                                const today = new Date().toISOString().split('T')[0];
+                                                document.getElementById('startDate').value = today;
+                                                document.getElementById('endDate').value = today;
+                                                loadRangeData(); // 立即查询
+                                            }
+
+                                            // 初始化: 默认选择今天
+                                            resetToToday();
+
+                                            async function fetchData(endpoint) {
+                                                try {
+                                                    const res = await fetch(`${apiBase}/${endpoint}`, {
+                                                        method: 'GET',
+                                                        headers: {
+                                                            'Authorization': API_TOKEN, // 必须携带这个头
+                                                            'Content-Type': 'application/json'
+                                                        }
+                                                    });
+                                                    const json = await res.json();
+                                                    return json.success ? json.data : null;
+                                                } catch (e) {
+                                                    console.error(e);
+                                                    return null;
                                                 }
+                                            }
 
-                                                function updateClock() {
-                                                    const now = new Date();
-                                                    document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
-                                                    document.getElementById('clock-date').innerText = now.toLocaleDateString();
-                                                }
-                                                setInterval(updateClock, 1000);
-                                                updateClock();
-
-                                                // 日期重置逻辑
-                                                function resetToToday() {
-                                                    const today = new Date().toISOString().split('T')[0];
-                                                    document.getElementById('startDate').value = today;
-                                                    document.getElementById('endDate').value = today;
-                                                    loadRangeData(); // 立即查询
-                                                }
-
-                                                // 初始化: 默认选择今天
-                                                resetToToday();
-
-                                                async function fetchData(endpoint) {
-                                                    try {
-                                                        const res = await fetch(`${apiBase}/${endpoint}`, {
-                                                            method: 'GET',
-                                                            headers: {
-                                                                'Authorization': API_TOKEN, // 必须携带这个头
-                                                                'Content-Type': 'application/json'
-                                                            }
-                                                        });
-                                                        const json = await res.json();
-                                                        return json.success ? json.data : null;
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                        return null;
-                                                    }
-                                                }
-
-                                                // 核心渲染函数
-                                                function renderChart(id, type, data, options = {}) {
-                                                    const ctx = document.getElementById(id).getContext('2d');
-                                                    if (charts[id]) 
-                                                        charts[id].destroy();
-                                                    
+                                            // 核心渲染函数
+                                            function renderChart(id, type, data, options = {}) {
+                                                const ctx = document.getElementById(id).getContext('2d');
+                                                if (charts[id]) 
+                                                    charts[id].destroy();
+                                                
 
 
-                                                    // 默认配置
-                                                    const defaultOptions = {
-                                                        responsive: true,
-                                                        maintainAspectRatio: false,
-                                                        plugins: {
-                                                            legend: {
+                                                // 默认配置
+                                                const defaultOptions = {
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    plugins: {
+                                                        legend: {
+                                                            display: false
+                                                        }
+                                                    },
+                                                    scales: {
+                                                        x: {
+                                                            grid: {
                                                                 display: false
                                                             }
-                                                        },
+                                                        }, // 默认隐藏X网格
+                                                        y: {
+                                                            grid: {
+                                                                color: 'rgba(255,255,255,0.05)'
+                                                            },
+                                                            beginAtZero: true
+                                                        }
+                                                    }
+                                                };
+
+                                                // 深度合并配置 (简单版)
+                                                const finalOptions = {
+                                                    ... defaultOptions,
+                                                    ...options
+                                                };
+                                                if (options.scales) 
+                                                    finalOptions.scales = {
+                                                        ... defaultOptions.scales,
+                                                        ...options.scales
+                                                    };
+                                                
+
+
+                                                if (options.plugins) 
+                                                    finalOptions.plugins = {
+                                                        ... defaultOptions.plugins,
+                                                        ...options.plugins
+                                                    };
+                                                
+
+
+                                                charts[id] = new Chart(ctx, {type, data, options: finalOptions});
+                                            }
+
+                                            // --- 1. 加载【区间视图】数据 ---
+                                            async function loadRangeData() {
+                                                const start = document.getElementById('startDate').value;
+                                                const end = document.getElementById('endDate').value;
+                                                const query = `?startDate=${start}&endDate=${end}`;
+
+                                                // KPI
+                                                const overview = await fetchData(`daily/overview${query}`);
+                                                if (overview) {
+                                                    document.getElementById('range-users').innerText = overview.active_users;
+                                                    document.getElementById('range-tracks').innerText = overview.total_interactions;
+                                                    document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
+                                                }
+
+                                                // Hourly (Line)
+                                                const hourly = await fetchData(`daily/hourly${query}`);
+                                                if (hourly) {
+                                                    const hours = Array.from({
+                                                        length: 24
+                                                    }, (_, i) => i);
+                                                    const dataMap = {};
+                                                    hourly.forEach(d => dataMap[d._id] = d.count);
+
+                                                    const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
+                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                                                    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
+                                                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+                                                    renderChart('rangeHourlyChart', 'line', {
+                                                        labels: hours.map(h => `${h}:00`),
+                                                        datasets: [
+                                                            {
+                                                                label: 'Interactions',
+                                                                data: hours.map(h => dataMap[h] || 0),
+                                                                borderColor: '#f59e0b',
+                                                                backgroundColor: gradient,
+                                                                fill: true,
+                                                                tension: 0.4
+                                                            }
+                                                        ]
+                                                    });
+                                                }
+
+                                                // Geo (Bar)
+                                                const geo = await fetchData(`daily/geolocation${query}`);
+                                                if (geo) {
+                                                    renderChart('rangeGeoChart', 'bar', {
+                                                        labels: geo.map(d => d._id),
+                                                        datasets: [
+                                                            {
+                                                                label: 'Views',
+                                                                data: geo.map(d => d.count),
+                                                                backgroundColor: '#10b981',
+                                                                borderRadius: 4
+                                                            }
+                                                        ]
+                                                    });
+                                                }
+
+                                                // Targets (Horizontal Bar) - 新增
+                                                const targets = await fetchData(`daily/targets${query}`);
+                                                if (targets) {
+                                                    renderChart('rangeTargetChart', 'bar', {
+                                                        labels: targets.map(d => d._id),
+                                                        datasets: [
+                                                            {
+                                                                label: 'Clicks',
+                                                                data: targets.map(d => d.count),
+                                                                backgroundColor: '#8b5cf6',
+                                                                borderRadius: 4
+                                                            }
+                                                        ]
+                                                    }, {indexAxis: 'y'});
+                                                }
+                                            }
+
+                                            // --- 2. 加载【总览】数据 ---
+                                            async function loadTotalData() {
+                                                const ov = await fetchData('overview');
+                                                const time = await fetchData('staytime');
+                                                if (ov) {
+                                                    document.getElementById('total-users').innerText = ov.total_users;
+                                                    document.getElementById('total-tracks').innerText = ov.total_tracks;
+                                                }
+                                                if (time) 
+                                                    document.getElementById('total-time').innerText = formatTime(time);
+                                                
+
+
+                                                // Timeline Trend (修复直线问题)
+                                                const timeline = await fetchData('timeline');
+                                                if (timeline) {
+                                                    const ctx = document.getElementById('totalTimelineChart').getContext('2d');
+                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                                                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                                                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+                                                    renderChart('totalTimelineChart', 'line', {
+                                                        labels: timeline.map(d => d._id),
+                                                        datasets: [
+                                                            {
+                                                                label: 'Visits',
+                                                                data: timeline.map(d => d.count),
+                                                                borderColor: '#3b82f6',
+                                                                backgroundColor: gradient,
+                                                                fill: true,
+                                                                tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
+                                                            }
+                                                        ]
+                                                    }, {
                                                         scales: {
-                                                            x: {
-                                                                grid: {
-                                                                    display: false
-                                                                }
-                                                            }, // 默认隐藏X网格
                                                             y: {
+                                                                beginAtZero: true,
+                                                                suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
                                                                 grid: {
                                                                     color: 'rgba(255,255,255,0.05)'
-                                                                },
-                                                                beginAtZero: true
+                                                                }
                                                             }
                                                         }
-                                                    };
-
-                                                    // 深度合并配置 (简单版)
-                                                    const finalOptions = {
-                                                        ... defaultOptions,
-                                                        ...options
-                                                    };
-                                                    if (options.scales) 
-                                                        finalOptions.scales = {
-                                                            ... defaultOptions.scales,
-                                                            ...options.scales
-                                                        };
-                                                    
-
-
-                                                    if (options.plugins) 
-                                                        finalOptions.plugins = {
-                                                            ... defaultOptions.plugins,
-                                                            ...options.plugins
-                                                        };
-                                                    
-
-
-                                                    charts[id] = new Chart(ctx, {type, data, options: finalOptions});
+                                                    });
                                                 }
 
-                                                // --- 1. 加载【区间视图】数据 ---
-                                                async function loadRangeData() {
-                                                    const start = document.getElementById('startDate').value;
-                                                    const end = document.getElementById('endDate').value;
-                                                    const query = `?startDate=${start}&endDate=${end}`;
-
-                                                    // KPI
-                                                    const overview = await fetchData(`daily/overview${query}`);
-                                                    if (overview) {
-                                                        document.getElementById('range-users').innerText = overview.active_users;
-                                                        document.getElementById('range-tracks').innerText = overview.total_interactions;
-                                                        document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
-                                                    }
-
-                                                    // Hourly (Line)
-                                                    const hourly = await fetchData(`daily/hourly${query}`);
-                                                    if (hourly) {
-                                                        const hours = Array.from({
-                                                            length: 24
-                                                        }, (_, i) => i);
-                                                        const dataMap = {};
-                                                        hourly.forEach(d => dataMap[d._id] = d.count);
-
-                                                        const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
-                                                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                                                        gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
-                                                        gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
-
-                                                        renderChart('rangeHourlyChart', 'line', {
-                                                            labels: hours.map(h => `${h}:00`),
-                                                            datasets: [
-                                                                {
-                                                                    label: 'Interactions',
-                                                                    data: hours.map(h => dataMap[h] || 0),
-                                                                    borderColor: '#f59e0b',
-                                                                    backgroundColor: gradient,
-                                                                    fill: true,
-                                                                    tension: 0.4
-                                                                }
-                                                            ]
-                                                        });
-                                                    }
-
-                                                    // Geo (Bar)
-                                                    const geo = await fetchData(`daily/geolocation${query}`);
-                                                    if (geo) {
-                                                        renderChart('rangeGeoChart', 'bar', {
-                                                            labels: geo.map(d => d._id),
-                                                            datasets: [
-                                                                {
-                                                                    label: 'Views',
-                                                                    data: geo.map(d => d.count),
-                                                                    backgroundColor: '#10b981',
-                                                                    borderRadius: 4
-                                                                }
-                                                            ]
-                                                        });
-                                                    }
-
-                                                    // Targets (Horizontal Bar) - 新增
-                                                    const targets = await fetchData(`daily/targets${query}`);
-                                                    if (targets) {
-                                                        renderChart('rangeTargetChart', 'bar', {
-                                                            labels: targets.map(d => d._id),
-                                                            datasets: [
-                                                                {
-                                                                    label: 'Clicks',
-                                                                    data: targets.map(d => d.count),
-                                                                    backgroundColor: '#8b5cf6',
-                                                                    borderRadius: 4
-                                                                }
-                                                            ]
-                                                        }, {indexAxis: 'y'});
-                                                    }
-                                                }
-
-                                                // --- 2. 加载【总览】数据 ---
-                                                async function loadTotalData() {
-                                                    const ov = await fetchData('overview');
-                                                    const time = await fetchData('staytime');
-                                                    if (ov) {
-                                                        document.getElementById('total-users').innerText = ov.total_users;
-                                                        document.getElementById('total-tracks').innerText = ov.total_tracks;
-                                                    }
-                                                    if (time) 
-                                                        document.getElementById('total-time').innerText = formatTime(time);
-                                                    
-
-
-                                                    // Timeline Trend (修复直线问题)
-                                                    const timeline = await fetchData('timeline');
-                                                    if (timeline) {
-                                                        const ctx = document.getElementById('totalTimelineChart').getContext('2d');
-                                                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                                                        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-                                                        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-                                                        renderChart('totalTimelineChart', 'line', {
-                                                            labels: timeline.map(d => d._id),
-                                                            datasets: [
-                                                                {
-                                                                    label: 'Visits',
-                                                                    data: timeline.map(d => d.count),
-                                                                    borderColor: '#3b82f6',
-                                                                    backgroundColor: gradient,
-                                                                    fill: true,
-                                                                    tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
-                                                                }
-                                                            ]
-                                                        }, {
-                                                            scales: {
-                                                                y: {
-                                                                    beginAtZero: true,
-                                                                    suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
-                                                                    grid: {
-                                                                        color: 'rgba(255,255,255,0.05)'
-                                                                    }
-                                                                }
+                                                // Total Targets
+                                                const targets = await fetchData('targets');
+                                                if (targets) {
+                                                    renderChart('totalTargetChart', 'bar', {
+                                                        labels: targets.map(d => d._id),
+                                                        datasets: [
+                                                            {
+                                                                data: targets.map(d => d.count),
+                                                                backgroundColor: '#8b5cf6',
+                                                                borderRadius: 4
                                                             }
-                                                        });
-                                                    }
-
-                                                    // Total Targets
-                                                    const targets = await fetchData('targets');
-                                                    if (targets) {
-                                                        renderChart('totalTargetChart', 'bar', {
-                                                            labels: targets.map(d => d._id),
-                                                            datasets: [
-                                                                {
-                                                                    data: targets.map(d => d.count),
-                                                                    backgroundColor: '#8b5cf6',
-                                                                    borderRadius: 4
-                                                                }
-                                                            ]
-                                                        }, {indexAxis: 'y'});
-                                                    }
-
-                                                    // Total Geo (修复: 移除背景线条)
-                                                    const geo = await fetchData('geolocation');
-                                                    if (geo) {
-                                                        renderChart('totalGeoChart', 'doughnut', {
-                                                            labels: geo.map(d => d._id),
-                                                            datasets: [
-                                                                {
-                                                                    data: geo.map(d => d.count),
-                                                                    backgroundColor: [
-                                                                        '#3b82f6',
-                                                                        '#8b5cf6',
-                                                                        '#10b981',
-                                                                        '#f59e0b',
-                                                                        '#ef4444'
-                                                                    ],
-                                                                    borderWidth: 0
-                                                                }
-                                                            ]
-                                                        }, {
-                                                            scales: {
-                                                                x: {
-                                                                    display: false
-                                                                },
-                                                                y: {
-                                                                    display: false
-                                                                }
-                                                            }, // 强制隐藏坐标轴
-                                                            plugins: {
-                                                                legend: {
-                                                                    display: true,
-                                                                    position: 'right'
-                                                                }
-                                                            }
-                                                        });
-                                                    }
+                                                        ]
+                                                    }, {indexAxis: 'y'});
                                                 }
 
-                                                // ===============================================
-                                                // SETTINGS & HOOK CONFIGURATION LOGIC
-                                                // ===============================================
+                                                // Total Geo (修复: 移除背景线条)
+                                                const geo = await fetchData('geolocation');
+                                                if (geo) {
+                                                    renderChart('totalGeoChart', 'doughnut', {
+                                                        labels: geo.map(d => d._id),
+                                                        datasets: [
+                                                            {
+                                                                data: geo.map(d => d.count),
+                                                                backgroundColor: [
+                                                                    '#3b82f6',
+                                                                    '#8b5cf6',
+                                                                    '#10b981',
+                                                                    '#f59e0b',
+                                                                    '#ef4444'
+                                                                ],
+                                                                borderWidth: 0
+                                                            }
+                                                        ]
+                                                    }, {
+                                                        scales: {
+                                                            x: {
+                                                                display: false
+                                                            },
+                                                            y: {
+                                                                display: false
+                                                            }
+                                                        }, // 强制隐藏坐标轴
+                                                        plugins: {
+                                                            legend: {
+                                                                display: true,
+                                                                position: 'right'
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
 
-                                                // 3. 动态生成带删除按钮的输入框
-                                                function createRemovableInput(containerId, value = "", type = "text", placeholder = "") {
-                                                    const container = document.getElementById(containerId);
-                                                    const div = document.createElement('div');
-                                                    div.className = "input-group mb-2";
+                                            // ===============================================
+                                            // SETTINGS & HOOK CONFIGURATION LOGIC
+                                            // ===============================================
 
-                                                    div.innerHTML = `
+                                            // 3. 动态生成带删除按钮的输入框
+                                            function createRemovableInput(containerId, value = "", type = "text", placeholder = "") {
+                                                const container = document.getElementById(containerId);
+                                                const div = document.createElement('div');
+                                                div.className = "input-group mb-2";
+
+                                                div.innerHTML = `
         <input type="${type}" class="form-control bg-dark text-white border-secondary" value="${value}" placeholder="${placeholder}">
         <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()">×</button>
     `;
-                                                    container.appendChild(div);
-                                                }
+                                                container.appendChild(div);
+                                            }
 
-                                                // 添加接收人输入框
-                                                function addReceiverField(value = "") {
-                                                    createRemovableInput('receivers-container', value, 'email', 'receiver@example.com');
-                                                }
+                                            // 添加接收人输入框
+                                            function addReceiverField(value = "") {
+                                                createRemovableInput('receivers-container', value, 'email', 'receiver@example.com');
+                                            }
 
-                                                // 添加时间输入框 (使用浏览器原生 Time Picker)
-                                                function addTimeField(value = "") {
-                                                    createRemovableInput('times-container', value, 'time');
-                                                }
+                                            // 添加时间输入框 (使用浏览器原生 Time Picker)
+                                            function addTimeField(value = "") {
+                                                createRemovableInput('times-container', value, 'time');
+                                            }
 
-                                                // 2. 从后端加载配置
-                                                async function loadConfig() {
-                                                    // 只有在没加载过的情况下才去请求，或者你希望每次切换都刷新也可以去掉这个 if
-                                                    // 但为了体验顺滑，建议保留这个 check，或者在保存成功后重置它
-                                                    if (configLoaded) 
+                                            // 2. 从后端加载配置
+                                            async function loadConfig() {
+                                                // 只有在没加载过的情况下才去请求，或者你希望每次切换都刷新也可以去掉这个 if
+                                                // 但为了体验顺滑，建议保留这个 check，或者在保存成功后重置它
+                                                if (configLoaded) 
+                                                    return;
+                                                
+
+
+                                                try {
+                                                    const res = await fetch('/api/admin/config', {
+                                                        headers: {
+                                                            'Authorization': API_TOKEN
+                                                        }
+                                                    });
+
+                                                    // 如果权限不足 (403)，直接结束，不弹窗，不打扰用户
+                                                    if (res.status === 403) {
+                                                        console.warn("[Silent Load] Token invalid or unauthorized. Waiting for manual update.");
                                                         return;
+                                                    }
+
+                                                    const json = await res.json();
+
+                                                    if (json.success) {
+                                                        const conf = json.data;
+
+                                                        // 填充数据
+                                                        document.getElementById('smtpHost').value = conf.smtp.host || "";
+                                                        document.getElementById('smtpPort').value = conf.smtp.port || 465;
+                                                        document.getElementById('smtpUser').value = conf.smtp.user || "";
+                                                        // 密码通常不回显，或者只显示占位符
+                                                        document.getElementById('smtpPass').value = conf.smtp.pass || "";
+
+                                                        // 填充接收人
+                                                        const rContainer = document.getElementById('receivers-container');
+                                                        rContainer.innerHTML = '';
+                                                        if (conf.receivers && conf.receivers.length > 0) {
+                                                            conf.receivers.forEach(r => addReceiverField(r));
+                                                        } else {
+                                                            addReceiverField();
+                                                        }
+
+                                                        // 填充时间
+                                                        const tContainer = document.getElementById('times-container');
+                                                        tContainer.innerHTML = '';
+                                                        if (conf.report_times && conf.report_times.length > 0) {
+                                                            conf.report_times.forEach(t => addTimeField(t));
+                                                        } else {
+                                                            addTimeField("12:00");
+                                                        }
+
+                                                        // 标记加载成功
+                                                        configLoaded = true;
+                                                    }
+                                                } catch (e) { // 网络错误也不弹窗，仅记录日志
+                                                    console.warn("[Silent Load] Failed to load config:", e);
+                                                }
+                                            }
+
+                                            // 3. 保存配置到后端
+                                            async function saveConfig() {
+                                                // 收集 SMTP 数据
+                                                // [安全检查] 如果配置从未加载成功过，保存可能会导致原有数据被空数据覆盖
+                                                // 这里我们尝试先验证一次 Token
+                                                if (! configLoaded) {
+                                                    const confirmLoad = confirm("⚠️ 配置尚未加载成功 (可能是权限不足)。\n直接保存可能会覆盖原有配置。\n\n点击 [确定] 输入 Token 并先加载配置。\n点击 [取消] 强制保存当前表单。");
+                                                    if (confirmLoad) {
+                                                        await requestTokenAndReload();
+                                                        return;
+                                                    }
+                                                }
+
+                                                // 收集表单数据
+                                                const smtp = {
+                                                    host: document.getElementById('smtpHost').value.trim(),
+                                                    port: parseInt(document.getElementById('smtpPort').value) || 465,
+                                                    secure: true,
+                                                    user: document.getElementById('smtpUser').value.trim(),
+                                                    pass: document.getElementById('smtpPass').value.trim()
+                                                };
+
+                                                const receivers = [];
+                                                document.querySelectorAll('#receivers-container input').forEach(input => {
+                                                    if (input.value.trim()) 
+                                                        receivers.push(input.value.trim());
                                                     
 
+
+                                                });
+
+                                                const report_times = [];
+                                                document.querySelectorAll('#times-container input').forEach(input => {
+                                                    if (input.value.trim()) 
+                                                        report_times.push(input.value.trim());
+                                                    
+
+
+                                                });
+
+                                                // 发送请求
+                                                try {
+                                                    const res = await fetch('/api/admin/config', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Authorization': API_TOKEN,
+                                                            'Content-Type': 'application/json'
+                                                        },
+                                                        body: JSON.stringify(
+                                                            {smtp, receivers, report_times}
+                                                        )
+                                                    });
+
+                                                    // [核心] 如果返回 403 禁止访问 -> 弹出 Auth Check
+                                                    if (res.status === 403) {
+                                                        await handleAuthFailure(saveConfig); // 传入当前函数以便重试
+                                                        return;
+                                                    }
+
+                                                    const json = await res.json();
+                                                    if (json.success) {
+                                                        alert("✅ Configuration Saved Successfully!");
+                                                        configLoaded = true; // 保存成功也视为加载成功
+                                                    } else {
+                                                        alert("❌ Error: " + json.error);
+                                                    }
+                                                } catch (e) {
+                                                    alert("Server Error");
+                                                }
+                                            }
+
+                                            // 4. 发送测试邮件
+                                            async function testEmail() { // 1. 确认提示
+                                                const confirmed = confirm("📧 发送测试报表 (Send Test Report)\n\n" + "这将根据当前数据库中的真实数据，生成一份比对报表，\n" + "并发送到配置的接收人邮箱列表。\n\n" + "确定要发送吗？");
+
+                                                if (! confirmed) 
+                                                    return;
+                                                
+
+
+                                                // 2. 定义发送逻辑 (封装以便重试)
+                                                const performTest = async () => {
                                                     try {
-                                                        const res = await fetch('/api/admin/config', {
+                                                        const res = await fetch('/api/admin/test-email', {
+                                                            method: 'POST',
                                                             headers: {
                                                                 'Authorization': API_TOKEN
                                                             }
                                                         });
 
-                                                        // 如果权限不足 (403)，直接结束，不弹窗，不打扰用户
+                                                        // 权限拦截
                                                         if (res.status === 403) {
-                                                            console.warn("[Silent Load] Token invalid or unauthorized. Waiting for manual update.");
-                                                            return;
-                                                        }
-
-                                                        const json = await res.json();
-
-                                                        if (json.success) {
-                                                            const conf = json.data;
-
-                                                            // 填充数据
-                                                            document.getElementById('smtpHost').value = conf.smtp.host || "";
-                                                            document.getElementById('smtpPort').value = conf.smtp.port || 465;
-                                                            document.getElementById('smtpUser').value = conf.smtp.user || "";
-                                                            // 密码通常不回显，或者只显示占位符
-                                                            document.getElementById('smtpPass').value = conf.smtp.pass || "";
-
-                                                            // 填充接收人
-                                                            const rContainer = document.getElementById('receivers-container');
-                                                            rContainer.innerHTML = '';
-                                                            if (conf.receivers && conf.receivers.length > 0) {
-                                                                conf.receivers.forEach(r => addReceiverField(r));
-                                                            } else {
-                                                                addReceiverField();
-                                                            }
-
-                                                            // 填充时间
-                                                            const tContainer = document.getElementById('times-container');
-                                                            tContainer.innerHTML = '';
-                                                            if (conf.report_times && conf.report_times.length > 0) {
-                                                                conf.report_times.forEach(t => addTimeField(t));
-                                                            } else {
-                                                                addTimeField("12:00");
-                                                            }
-
-                                                            // 标记加载成功
-                                                            configLoaded = true;
-                                                        }
-                                                    } catch (e) { // 网络错误也不弹窗，仅记录日志
-                                                        console.warn("[Silent Load] Failed to load config:", e);
-                                                    }
-                                                }
-
-                                                // 3. 保存配置到后端
-                                                async function saveConfig() {
-                                                    // 收集 SMTP 数据
-                                                    // [安全检查] 如果配置从未加载成功过，保存可能会导致原有数据被空数据覆盖
-                                                    // 这里我们尝试先验证一次 Token
-                                                    if (! configLoaded) {
-                                                        const confirmLoad = confirm("⚠️ 配置尚未加载成功 (可能是权限不足)。\n直接保存可能会覆盖原有配置。\n\n点击 [确定] 输入 Token 并先加载配置。\n点击 [取消] 强制保存当前表单。");
-                                                        if (confirmLoad) {
-                                                            await requestTokenAndReload();
-                                                            return;
-                                                        }
-                                                    }
-
-                                                    // 收集表单数据
-                                                    const smtp = {
-                                                        host: document.getElementById('smtpHost').value.trim(),
-                                                        port: parseInt(document.getElementById('smtpPort').value) || 465,
-                                                        secure: true,
-                                                        user: document.getElementById('smtpUser').value.trim(),
-                                                        pass: document.getElementById('smtpPass').value.trim()
-                                                    };
-
-                                                    const receivers = [];
-                                                    document.querySelectorAll('#receivers-container input').forEach(input => {
-                                                        if (input.value.trim()) 
-                                                            receivers.push(input.value.trim());
-                                                        
-
-
-                                                    });
-
-                                                    const report_times = [];
-                                                    document.querySelectorAll('#times-container input').forEach(input => {
-                                                        if (input.value.trim()) 
-                                                            report_times.push(input.value.trim());
-                                                        
-
-
-                                                    });
-
-                                                    // 发送请求
-                                                    try {
-                                                        const res = await fetch('/api/admin/config', {
-                                                            method: 'POST',
-                                                            headers: {
-                                                                'Authorization': API_TOKEN,
-                                                                'Content-Type': 'application/json'
-                                                            },
-                                                            body: JSON.stringify(
-                                                                {smtp, receivers, report_times}
-                                                            )
-                                                        });
-
-                                                        // [核心] 如果返回 403 禁止访问 -> 弹出 Auth Check
-                                                        if (res.status === 403) {
-                                                            await handleAuthFailure(saveConfig); // 传入当前函数以便重试
+                                                            await handleAuthFailure(performTest); // 失败则弹窗输入 Token 并重试
                                                             return;
                                                         }
 
                                                         const json = await res.json();
                                                         if (json.success) {
-                                                            alert("✅ Configuration Saved Successfully!");
-                                                            configLoaded = true; // 保存成功也视为加载成功
+                                                            alert("✅ 邮件已发送! (Email Sent)\n请检查收件箱，确认收到包含数据表格的报表。");
                                                         } else {
-                                                            alert("❌ Error: " + json.error);
+                                                            alert("❌ 发送失败 (Failed): " + json.error);
                                                         }
                                                     } catch (e) {
-                                                        alert("Server Error");
+                                                        alert("Connection Error");
                                                     }
-                                                }
+                                                };
 
-                                                // 4. 发送测试邮件
-                                                async function testEmail() { // 1. 确认提示
-                                                    const confirmed = confirm("📧 发送测试报表 (Send Test Report)\n\n" + "这将根据当前数据库中的真实数据，生成一份比对报表，\n" + "并发送到配置的接收人邮箱列表。\n\n" + "确定要发送吗？");
+                                                // 3. 执行
+                                                performTest();
+                                            }
 
-                                                    if (! confirmed) 
-                                                        return;
+                                            // [新增] 处理权限不足的通用函数
+                                            async function handleAuthFailure(retryCallback) {
+                                                const newToken = prompt("🔒 权限验证失败 (Access Denied)\n\n请输入 Admin Token 继续:");
+                                                if (newToken) {
+                                                    API_TOKEN = newToken;
+                                                    localStorage.setItem('admin_token', newToken);
+                                                    // 记住 Token
+                                                    // 递归重试刚才的操作
+                                                    if (retryCallback) 
+                                                        retryCallback();
                                                     
 
 
-                                                    // 2. 定义发送逻辑 (封装以便重试)
-                                                    const performTest = async () => {
-                                                        try {
-                                                            const res = await fetch('/api/admin/test-email', {
-                                                                method: 'POST',
-                                                                headers: {
-                                                                    'Authorization': API_TOKEN
-                                                                }
-                                                            });
-
-                                                            // 权限拦截
-                                                            if (res.status === 403) {
-                                                                await handleAuthFailure(performTest); // 失败则弹窗输入 Token 并重试
-                                                                return;
-                                                            }
-
-                                                            const json = await res.json();
-                                                            if (json.success) {
-                                                                alert("✅ 邮件已发送! (Email Sent)\n请检查收件箱，确认收到包含数据表格的报表。");
-                                                            } else {
-                                                                alert("❌ 发送失败 (Failed): " + json.error);
-                                                            }
-                                                        } catch (e) {
-                                                            alert("Connection Error");
-                                                        }
-                                                    };
-
-                                                    // 3. 执行
-                                                    performTest();
                                                 }
+                                            }
 
-                                                // [新增] 处理权限不足的通用函数
-                                                async function handleAuthFailure(retryCallback) {
-                                                    const newToken = prompt("🔒 权限验证失败 (Access Denied)\n\n请输入 Admin Token 继续:");
-                                                    if (newToken) {
-                                                        API_TOKEN = newToken;
-                                                        localStorage.setItem('admin_token', newToken);
-                                                        // 记住 Token
-                                                        // 递归重试刚才的操作
-                                                        if (retryCallback) 
-                                                            retryCallback();
-                                                        
-
-
+                                            // [新增] 主动请求 Token 并加载配置
+                                            async function requestTokenAndReload() {
+                                                const newToken = prompt("🔄 Please enter Admin Token to load configuration:");
+                                                if (newToken) {
+                                                    API_TOKEN = newToken;
+                                                    localStorage.setItem('admin_token', newToken);
+                                                    await loadConfig();
+                                                    if (configLoaded) {
+                                                        alert("✅ Config loaded!");
+                                                    } else {
+                                                        alert("❌ Load failed. Token might be wrong.");
                                                     }
                                                 }
+                                            }
 
-                                                // [新增] 主动请求 Token 并加载配置
-                                                async function requestTokenAndReload() {
-                                                    const newToken = prompt("🔄 Please enter Admin Token to load configuration:");
-                                                    if (newToken) {
-                                                        API_TOKEN = newToken;
-                                                        localStorage.setItem('admin_token', newToken);
-                                                        await loadConfig();
-                                                        if (configLoaded) {
-                                                            alert("✅ Config loaded!");
-                                                        } else {
-                                                            alert("❌ Load failed. Token might be wrong.");
-                                                        }
-                                                    }
-                                                }
+                                            // 5. 监听 Tab 切换，实现懒加载
+                                            // 当用户点击 "Settings" Tab 时，才去请求后端加载配置
+                                            const settingsTabBtn = document.getElementById('settings-tab');
+                                            settingsTabBtn.addEventListener('shown.bs.tab', () => {
+                                                loadConfig();
+                                            });
 
-                                                // 5. 监听 Tab 切换，实现懒加载
-                                                // 当用户点击 "Settings" Tab 时，才去请求后端加载配置
-                                                const settingsTabBtn = document.getElementById('settings-tab');
-                                                settingsTabBtn.addEventListener('shown.bs.tab', () => {
-                                                    loadConfig();
-                                                });
+                                            // Tab 监听 (懒加载)
+                                            const totalTabBtn = document.getElementById('total-tab');
+                                            totalTabBtn.addEventListener('shown.bs.tab', () => {
+                                                loadTotalData();
+                                                window.dispatchEvent(new Event('resize'));
+                                            }, {once: true});
 
-                                                // Tab 监听 (懒加载)
-                                                const totalTabBtn = document.getElementById('total-tab');
-                                                totalTabBtn.addEventListener('shown.bs.tab', () => {
-                                                    loadTotalData();
+                                            // 监听所有 Tab 切换以修正图表尺寸
+                                            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
+                                                el.addEventListener('shown.bs.tab', () => {
                                                     window.dispatchEvent(new Event('resize'));
-                                                }, {once: true});
-
-                                                // 监听所有 Tab 切换以修正图表尺寸
-                                                document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
-                                                    el.addEventListener('shown.bs.tab', () => {
-                                                        window.dispatchEvent(new Event('resize'));
-                                                    });
                                                 });
-                                            </script>
-                                        </body>
-                                    </html>
-                                </body>
+                                            });
+                                        </script>
+                                    </body>
+                                </html>
+                            </body>
