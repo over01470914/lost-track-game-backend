@@ -88,15 +88,17 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // 权限校验中间件
 const authGuard = (req, res, next) => {
-  const clientToken = req.headers["authorization"];
-  if (clientToken === ADMIN_TOKEN) {
-    next();
-  } else {
-    console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
-    res
-      .status(403)
-      .json({ success: false, error: "Access Denied: Unauthorized" });
-  }
+  // const clientToken = req.headers["authorization"];
+  // if (clientToken === ADMIN_TOKEN) {
+  //   next();
+  // } else {
+  //   console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
+  //   res
+  //     .status(403)
+  //     .json({ success: false, error: "Access Denied: Unauthorized" });
+  // }
+
+  next();
 };
 
 // [新增] 初始化 Hooks (邮件、报表、配置接口)
@@ -157,7 +159,7 @@ async function getIPGeolocation(ip) {
 }
 
 // 3. 管理员接口：增加 authGuard 保护
-app.use("/api/admin");
+app.use("/api/admin", authGuard);
 
 // 重置数据库接口
 app.delete("/api/admin/reset", async (req, res) => {
