@@ -744,7 +744,9 @@
                                                 async function loadConfig() {
                                                     // 只有在没加载过的情况下才去请求，或者你希望每次切换都刷新也可以去掉这个 if
                                                     // 但为了体验顺滑，建议保留这个 check，或者在保存成功后重置它
-                                                    // if (configLoaded) return;
+                                                    if (configLoaded) 
+                                                        return;
+                                                    
 
                                                     try {
                                                         const res = await fetch('/api/admin/config', {
