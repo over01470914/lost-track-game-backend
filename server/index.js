@@ -101,7 +101,7 @@ const authGuard = (req, res, next) => {
 
 // [新增] 初始化 Hooks (邮件、报表、配置接口)
 // 这行代码必须在 authGuard, UserTracking 定义之后，app.listen 之前
-initHooks(app, UserTracking, authGuard);
+initHooks(app, UserTracking);
 
 // 获取用户真实IP
 function getClientIP(req) {

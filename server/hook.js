@@ -272,9 +272,8 @@ router.post("/test-email", async (req, res) => {
  * 初始化 Hooks
  * @param {Express.Application} app - Express 实例
  * @param {Mongoose.Model} userTrackingModel - UserTracking 模型
- * @param {Function} authGuard - 权限中间件
  */
-const initHooks = (app, userTrackingModel, authGuard) => {
+const initHooks = (app, userTrackingModel) => {
   UserTracking = userTrackingModel;
 
   // 注册路由 (挂载在 /api/admin 下)
