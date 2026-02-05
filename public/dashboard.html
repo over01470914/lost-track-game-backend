@@ -342,6 +342,12 @@
 
                                             <!-- 1. SMTP 邮件服务器配置 -->
                                             <div class="card mb-4">
+                                                <div class="d-flex justify-content-end mb-3">
+                                                    <button class="btn btn-sm btn-outline-info" onclick="requestTokenAndReload()">
+                                                        🔄 Reload / Change Token
+                                                    </button>
+                                                </div>
+
                                                 <div class="card-header text-primary bg-primary bg-opacity-10 border-0">
                                                     📧 邮件发送配置 (Sender / SMTP Config)
                                                 </div>
@@ -426,8 +432,10 @@
                                                 Chart.defaults.font.family = "'Inter', sans-serif";
                                                 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
 
-                                                const API_TOKEN = "WPWix32CBJpLYAKiHYsx";
+                                                // [修改] 将 const 改为 let，并优先读取 localStorage
+                                                let API_TOKEN = localStorage.getItem('admin_token') || "WPWix32CBJpLYAKiHYsx";
                                                 const apiBase = '/api/stats';
+                                                let configLoaded = false; // [新增] 标记配置是否加载成功，防止覆盖空数据
                                                 let charts = {};
 
                                                 function formatTime(ms) {
@@ -740,52 +748,70 @@
                                                                 'Authorization': API_TOKEN
                                                             }
                                                         });
+
+                                                        // 如果 403 (Token错误)，直接退出，不弹窗，也不报错
+                                                        if (res.status === 403) {
+                                                            console.warn("Silent load failed: Unauthorized. Waiting for user action on Save.");
+                                                            return;
+                                                        }
+
                                                         const json = await res.json();
 
                                                         if (json.success) {
                                                             const conf = json.data;
 
-                                                            // 填充 SMTP 表单
+                                                            // 填充数据
                                                             document.getElementById('smtpHost').value = conf.smtp.host || "";
                                                             document.getElementById('smtpPort').value = conf.smtp.port || 587;
                                                             document.getElementById('smtpUser').value = conf.smtp.user || "";
-                                                            // 密码出于安全考虑通常不回显，或者只回显 placeholder，这里简单处理
                                                             document.getElementById('smtpPass').value = conf.smtp.pass || "";
 
-                                                            // 填充接收人列表
                                                             const rContainer = document.getElementById('receivers-container');
-                                                            rContainer.innerHTML = ''; // 清空旧的
+                                                            rContainer.innerHTML = '';
                                                             if (conf.receivers && conf.receivers.length > 0) {
                                                                 conf.receivers.forEach(r => addReceiverField(r));
                                                             } else {
-                                                                addReceiverField(); // 默认给一个空行
+                                                                addReceiverField();
                                                             }
 
-                                                            // 填充时间列表
                                                             const tContainer = document.getElementById('times-container');
-                                                            tContainer.innerHTML = ''; // 清空旧的
+                                                            tContainer.innerHTML = '';
                                                             if (conf.report_times && conf.report_times.length > 0) {
                                                                 conf.report_times.forEach(t => addTimeField(t));
                                                             } else {
-                                                                addTimeField("12:00"); // 默认给一个时间
+                                                                addTimeField("12:00");
                                                             }
+
+                                                            // [新增] 标记加载成功
+                                                            configLoaded = true;
                                                         }
                                                     } catch (e) {
-                                                        console.error("Failed to load config", e);
+                                                        console.warn("Silent load failed (Network error or other).");
                                                     }
                                                 }
 
                                                 // 3. 保存配置到后端
-                                                async function saveConfig() { // 收集 SMTP 数据
+                                                async function saveConfig() {
+                                                    // 收集 SMTP 数据
+                                                    // [安全检查] 如果配置从未加载成功过，保存可能会导致原有数据被空数据覆盖
+                                                    // 这里我们尝试先验证一次 Token
+                                                    if (! configLoaded) {
+                                                        const confirmLoad = confirm("⚠️ 配置尚未加载成功 (可能是权限不足)。\n直接保存可能会覆盖原有配置。\n\n点击 [确定] 输入 Token 并先加载配置。\n点击 [取消] 强制保存当前表单。");
+                                                        if (confirmLoad) {
+                                                            await requestTokenAndReload();
+                                                            return;
+                                                        }
+                                                    }
+
+                                                    // 收集表单数据
                                                     const smtp = {
                                                         host: document.getElementById('smtpHost').value.trim(),
                                                         port: parseInt(document.getElementById('smtpPort').value) || 587,
-                                                        secure: false, // 默认 false (TLS)
+                                                        secure: false,
                                                         user: document.getElementById('smtpUser').value.trim(),
                                                         pass: document.getElementById('smtpPass').value.trim()
                                                     };
 
-                                                    // 收集接收人列表 (过滤空值)
                                                     const receivers = [];
                                                     document.querySelectorAll('#receivers-container input').forEach(input => {
                                                         if (input.value.trim()) 
@@ -795,7 +821,6 @@
 
                                                     });
 
-                                                    // 收集时间列表
                                                     const report_times = [];
                                                     document.querySelectorAll('#times-container input').forEach(input => {
                                                         if (input.value.trim()) 
@@ -817,14 +842,22 @@
                                                                 {smtp, receivers, report_times}
                                                             )
                                                         });
+
+                                                        // [核心] 如果返回 403 禁止访问 -> 弹出 Auth Check
+                                                        if (res.status === 403) {
+                                                            await handleAuthFailure(saveConfig); // 传入当前函数以便重试
+                                                            return;
+                                                        }
+
                                                         const json = await res.json();
                                                         if (json.success) {
-                                                            alert("✅ Configuration Saved Successfully!\nScheduler has been updated.");
+                                                            alert("✅ Configuration Saved Successfully!");
+                                                            configLoaded = true; // 保存成功也视为加载成功
                                                         } else {
-                                                            alert("❌ Error saving config: " + json.error);
+                                                            alert("❌ Error: " + json.error);
                                                         }
                                                     } catch (e) {
-                                                        alert("Server connection error");
+                                                        alert("Server Error");
                                                     }
                                                 }
 
@@ -850,6 +883,36 @@
                                                         }
                                                     } catch (e) {
                                                         alert("Server connection error");
+                                                    }
+                                                }
+
+                                                // [新增] 处理权限不足的通用函数
+                                                async function handleAuthFailure(retryCallback) {
+                                                    const newToken = prompt("🔒 Access Denied (权限不足)\n\nPlease enter the Admin Token:");
+                                                    if (newToken) {
+                                                        API_TOKEN = newToken;
+                                                        localStorage.setItem('admin_token', newToken);
+                                                        // 记住 Token
+                                                        // 递归重试刚才的操作
+                                                        if (retryCallback) 
+                                                            retryCallback();
+                                                        
+
+                                                    }
+                                                }
+
+                                                // [新增] 主动请求 Token 并加载配置
+                                                async function requestTokenAndReload() {
+                                                    const newToken = prompt("🔄 Please enter Admin Token to load configuration:");
+                                                    if (newToken) {
+                                                        API_TOKEN = newToken;
+                                                        localStorage.setItem('admin_token', newToken);
+                                                        await loadConfig();
+                                                        if (configLoaded) {
+                                                            alert("✅ Config loaded!");
+                                                        } else {
+                                                            alert("❌ Load failed. Token might be wrong.");
+                                                        }
                                                     }
                                                 }
 
