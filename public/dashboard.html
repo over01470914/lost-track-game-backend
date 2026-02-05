@@ -741,27 +741,36 @@
 
                                             // 2. 从后端加载配置
                                             async function loadConfig() {
-                                                // 只有在没加载过的情况下才去请求，或者你希望每次切换都刷新也可以去掉这个 if
-                                                // 但为了体验顺滑，建议保留这个 check，或者在保存成功后重置它
-                                                if (configLoaded) 
-                                                    return;
-                                                
+                                                console.log("--- [Debug] loadConfig 触发 ---");
+                                                console.log("[Debug] 当前 API_TOKEN:", API_TOKEN);
+                                                console.log("[Debug] configLoaded 状态:", configLoaded);
 
+                                                // 1. 如果已经加载成功过，直接跳过
+                                                if (configLoaded) {
+                                                    console.log("[Debug] 配置已加载过，跳过请求。");
+                                                    return;
+                                                }
 
                                                 try {
+                                                    console.log("[Debug] 开始向 /api/admin/config 发送请求...");
                                                     const res = await fetch('/api/admin/config', {
                                                         headers: {
                                                             'Authorization': API_TOKEN
                                                         }
                                                     });
 
-                                                    // 如果权限不足 (403)，直接结束，不弹窗，不打扰用户
-                                                    if (res.status === 403) {
-                                                        console.warn("[Silent Load] Token invalid or unauthorized. Waiting for manual update.");
+                                                    console.log("[Debug] 服务器响应状态码 (Status):", res.status);
+
+                                                    // 2. 核心修复：如果是权限错误 (403 或 401)，直接 return，什么都不做
+                                                    if (res.status === 403 || res.status === 401) {
+                                                        console.warn("[Silent Load] ❌ 权限不足 (Token 无效)。保持静默，不弹窗。");
+                                                        console.warn("提示: 请点击 'Save Configuration' 或 'Reload' 按钮来手动更新 Token。");
                                                         return;
                                                     }
 
+                                                    // 3. 处理正常响应
                                                     const json = await res.json();
+                                                    console.log("[Debug] 响应数据:", json);
 
                                                     if (json.success) {
                                                         const conf = json.data;
@@ -770,7 +779,6 @@
                                                         document.getElementById('smtpHost').value = conf.smtp.host || "";
                                                         document.getElementById('smtpPort').value = conf.smtp.port || 465;
                                                         document.getElementById('smtpUser').value = conf.smtp.user || "";
-                                                        // 密码通常不回显，或者只显示占位符
                                                         document.getElementById('smtpPass').value = conf.smtp.pass || "";
 
                                                         // 填充接收人
@@ -793,9 +801,12 @@
 
                                                         // 标记加载成功
                                                         configLoaded = true;
+                                                        console.log("[Debug] ✅ 配置加载成功，configLoaded 已设为 true");
+                                                    } else {
+                                                        console.warn("[Debug] 服务器返回 success: false", json.error);
                                                     }
                                                 } catch (e) { // 网络错误也不弹窗，仅记录日志
-                                                    console.warn("[Silent Load] Failed to load config:", e);
+                                                    console.error("[Silent Load] ❌ 网络请求出错:", e);
                                                 }
                                             }
 

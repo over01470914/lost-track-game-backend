@@ -88,17 +88,15 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // 权限校验中间件
 const authGuard = (req, res, next) => {
-  // const clientToken = req.headers["authorization"];
-  // if (clientToken === ADMIN_TOKEN) {
-  //   next();
-  // } else {
-  //   console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
-  //   res
-  //     .status(403)
-  //     .json({ success: false, error: "Access Denied: Unauthorized" });
-  // }
-
-  next();
+  const clientToken = req.headers["authorization"];
+  if (clientToken === ADMIN_TOKEN) {
+    next();
+  } else {
+    console.warn(`Unauthorized access attempt from IP: ${req.ip}`);
+    res
+      .status(403)
+      .json({ success: false, error: "Access Denied: Unauthorized" });
+  }
 };
 
 // [新增] 初始化 Hooks (邮件、报表、配置接口)
