@@ -77,7 +77,7 @@ async function sendEmail(subject, htmlContent) {
   const transporter = nodemailer.createTransport(transporterContent);
 
   const mailOptions = {
-    from: `"Analytics Bot" <${cachedConfig.smtp.user}>`,
+    from: cachedConfig.smtp.user,
     to: cachedConfig.receivers.join(", "),
     subject: subject,
     html: htmlContent,
