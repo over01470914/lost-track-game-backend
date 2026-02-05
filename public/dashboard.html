@@ -862,28 +862,42 @@
                                                 }
 
                                                 // 4. 发送测试邮件
-                                                async function testEmail() {
-                                                    if (!confirm("This will send a test email to the receivers using the SAVED configuration.\nEnsure you have saved changes first.")) 
+                                                async function testEmail() { // 1. 确认提示
+                                                    const confirmed = confirm("📧 发送测试报表 (Send Test Report)\n\n" + "这将根据当前数据库中的真实数据，生成一份比对报表，\n" + "并发送到配置的接收人邮箱列表。\n\n" + "确定要发送吗？");
+
+                                                    if (! confirmed) 
                                                         return;
                                                     
 
+                                                    // 2. 定义发送逻辑 (封装以便重试)
+                                                    const performTest = async () => {
+                                                        try {
+                                                            const res = await fetch('/api/admin/test-email', {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Authorization': API_TOKEN
+                                                                }
+                                                            });
 
-                                                    try {
-                                                        const res = await fetch('/api/admin/test-email', {
-                                                            method: 'POST',
-                                                            headers: {
-                                                                'Authorization': API_TOKEN
+                                                            // 权限拦截
+                                                            if (res.status === 403) {
+                                                                await handleAuthFailure(performTest); // 失败则弹窗输入 Token 并重试
+                                                                return;
                                                             }
-                                                        });
-                                                        const json = await res.json();
-                                                        if (json.success) {
-                                                            alert("✅ " + json.message);
-                                                        } else {
-                                                            alert("❌ Email failed: " + json.error);
+
+                                                            const json = await res.json();
+                                                            if (json.success) {
+                                                                alert("✅ 邮件已发送! (Email Sent)\n请检查收件箱，确认收到包含数据表格的报表。");
+                                                            } else {
+                                                                alert("❌ 发送失败 (Failed): " + json.error);
+                                                            }
+                                                        } catch (e) {
+                                                            alert("Connection Error");
                                                         }
-                                                    } catch (e) {
-                                                        alert("Server connection error");
-                                                    }
+                                                    };
+
+                                                    // 3. 执行
+                                                    performTest();
                                                 }
 
                                                 // [新增] 处理权限不足的通用函数
@@ -897,6 +911,7 @@
                                                         if (retryCallback) 
                                                             retryCallback();
                                                         
+
 
                                                     }
                                                 }

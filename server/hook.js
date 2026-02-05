@@ -109,51 +109,82 @@ async function getStatsForPeriod(startTime, endTime) {
   };
 }
 
-// 执行报表生成与发送
-async function runScheduledReport() {
-  if (!UserTracking) return;
+// 1. [新增] 专门用于生成 HTML 报表的函数 (复用逻辑)
+async function generateReportHtml() {
+  if (!UserTracking) throw new Error("Database model not initialized");
 
   const now = new Date();
-  // 当前周期：过去12小时 (根据你的需求，这里可以写死或者做成配置)
+
+  // 定义时间窗口：模拟当前执行时的过去12小时 vs 再前12小时
   const currentEnd = now;
   const currentStart = new Date(now.getTime() - 12 * 60 * 60 * 1000);
 
-  // 上个周期：再往前12小时
   const prevEnd = currentStart;
   const prevStart = new Date(prevEnd.getTime() - 12 * 60 * 60 * 1000);
 
+  // 获取数据
   const currentStats = await getStatsForPeriod(currentStart, currentEnd);
   const prevStats = await getStatsForPeriod(prevStart, prevEnd);
 
+  // 计算差异
   const userDiff = currentStats.users - prevStats.users;
   const trackDiff = currentStats.tracks - prevStats.tracks;
 
+  // 辅助样式函数
+  const formatDiff = (val) => {
+    const color = val >= 0 ? "green" : "red";
+    const sign = val >= 0 ? "+" : "";
+    return `<span style="color: ${color}; font-weight: bold;">${sign}${val}</span>`;
+  };
+
+  // 生成 HTML (这是你要的比对表格)
   const html = `
-    <h2>📊 Analytics Report (${now.getHours()}:00)</h2>
-    <p>Time Range: ${currentStart.toLocaleString()} - ${currentEnd.toLocaleString()}</p>
-    <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px;">
-      <tr style="background-color: #f2f2f2;">
-        <th>Metric</th>
-        <th>Current (Last 12h)</th>
-        <th>Previous (Prev 12h)</th>
-        <th>Change</th>
-      </tr>
-      <tr>
-        <td><strong>Active Users</strong></td>
-        <td>${currentStats.users}</td>
-        <td>${prevStats.users}</td>
-        <td style="color: ${userDiff >= 0 ? "green" : "red"}"><strong>${userDiff >= 0 ? "+" : ""}${userDiff}</strong></td>
-      </tr>
-      <tr>
-        <td><strong>Interactions</strong></td>
-        <td>${currentStats.tracks}</td>
-        <td>${prevStats.tracks}</td>
-        <td style="color: ${trackDiff >= 0 ? "green" : "red"}"><strong>${trackDiff >= 0 ? "+" : ""}${trackDiff}</strong></td>
-      </tr>
-    </table>
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+      <h2 style="color: #2c3e50;">📊 Analytics Report</h2>
+      <p style="color: #7f8c8d; font-size: 14px;">
+        Generated at: ${now.toLocaleString()}<br/>
+        Period: Last 12 Hours
+      </p>
+      
+      <table border="1" cellpadding="12" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px; border-color: #eee;">
+        <tr style="background-color: #f8f9fa;">
+          <th style="text-align: left;">Metric</th>
+          <th style="text-align: center;">Current Period</th>
+          <th style="text-align: center;">Previous Period</th>
+          <th style="text-align: center;">Change</th>
+        </tr>
+        <tr>
+          <td><strong>👥 Active Users</strong></td>
+          <td style="text-align: center; font-size: 16px;">${currentStats.users}</td>
+          <td style="text-align: center; color: #999;">${prevStats.users}</td>
+          <td style="text-align: center;">${formatDiff(userDiff)}</td>
+        </tr>
+        <tr>
+          <td><strong>🖱️ Interactions</strong></td>
+          <td style="text-align: center; font-size: 16px;">${currentStats.tracks}</td>
+          <td style="text-align: center; color: #999;">${prevStats.tracks}</td>
+          <td style="text-align: center;">${formatDiff(trackDiff)}</td>
+        </tr>
+      </table>
+      
+      <p style="margin-top: 20px; font-size: 12px; color: #aaa;">
+        System Auto-generated Report.
+      </p>
+    </div>
   `;
 
-  await sendEmail(`📈 Analytics Report [${now.getHours()}:00]`, html);
+  return html;
+}
+
+// 执行报表生成与发送
+async function runScheduledReport() {
+  try {
+    const html = await generateReportHtml(); // 获取 HTML
+    const now = new Date();
+    await sendEmail(`📈 Scheduled Report [${now.getHours()}:00]`, html);
+  } catch (error) {
+    console.error("[Hook] Failed to run scheduled report:", error);
+  }
 }
 
 // 刷新定时任务调度
@@ -254,12 +285,28 @@ router.post("/config", async (req, res) => {
 // 测试邮件
 router.post("/test-email", async (req, res) => {
   try {
-    await sendEmail(
-      "🧪 Test Email",
-      "<h1>It Works!</h1><p>Configuration is correct.</p>"
-    );
-    res.json({ success: true, message: "Test email sent" });
+    // 1. 先检查配置是否存在
+    if (!cachedConfig || !cachedConfig.smtp.user) {
+      return res.status(400).json({
+        success: false,
+        error: "SMTP config not found. Please save config first.",
+      });
+    }
+
+    console.log("[Hook] Generating test report...");
+
+    // 2. 生成真实的报表数据 (复用逻辑)
+    const htmlContent = await generateReportHtml();
+
+    // 3. 发送邮件 (标题加个 Test 前缀区分)
+    await sendEmail("🧪 [TEST] Real Data Comparison Report", htmlContent);
+
+    res.json({
+      success: true,
+      message: "Real comparison report sent to receivers!",
+    });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ success: false, error: e.message });
   }
 });
