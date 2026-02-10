@@ -321,7 +321,7 @@ function generateProfessionalHtml(currentMetrics, prevSnapshot) {
 
       <div style="text-align: center; padding: 10px; font-size: 11px; color: #cbd5e1; background-color: #0f172a;">
         Automated Report from Lost Track Backend
-      <a href="https://dashboard.lost-track-game.com/" target="_blank" style="color: #4A88D4;">&emsp;&emsp;Link to Lost Track Dashboard</a>
+      <a href="https://dashboard.lost-track.com" target="_blank">Lost Track Dashboard</a>
       </div>
 
     </div>
