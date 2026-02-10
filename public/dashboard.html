@@ -569,8 +569,14 @@
                                                 <button class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="saveConfig()">
                                                     💾 Save Configuration
                                                 </button>
+
                                                 <button class="btn btn-outline-warning fw-bold" onclick="testEmail()">
                                                     🧪 Send Test Email
+                                                </button>
+
+                                                <!-- 重置按钮 -->
+                                                <button class="btn btn-outline-danger" onclick="resetConfig()">
+                                                    📦 Reset Configuration
                                                 </button>
                                             </div>
                                         </div>
@@ -1207,6 +1213,43 @@
                                 alert("❌ Load failed. Token might be wrong.");
                             }
                         }
+                    }
+
+                    // [新增] 重置数据库配置
+                    async function resetConfig() {
+                        const confirmed = confirm("⚠️ 确认重置数据库 (Reset Database)\n\n此操作将删除所有用户追踪数据，不可恢复！\n\n确定要继续吗？");
+                        if (! confirmed) 
+                            return;
+                        
+
+                        const performReset = async () => {
+                            try {
+                                const res = await fetch('/api/admin/reset', {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-Admin-Token': API_TOKEN
+                                    }
+                                });
+
+                                if (res.status === 403) {
+                                    await handleAuthFailure(performReset);
+                                    return;
+                                }
+
+                                const json = await res.json();
+                                if (json.success) {
+                                    alert("✅ 数据库已成功重置！");
+                                    loadRangeData();
+                                    loadTotalData();
+                                } else {
+                                    alert("❌ 重置失败: " + json.error);
+                                }
+                            } catch (e) {
+                                alert("连接错误 (Connection Error)");
+                            }
+                        };
+
+                        performReset();
                     }
 
                     // 5. 监听 Tab 切换，实现懒加载
