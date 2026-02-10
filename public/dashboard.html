@@ -146,10 +146,65 @@
                         height: 250px;
                         width: 100%;
                     }
+                    /* 折叠区域样式 */
+                    .collapse {
+                        transition: height 0.3s ease;
+                    }
+
+                    /* KPI 卡片悬停效果 */
+                    .kpi-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+                        transition: all 0.3s ease;
+                    }
+
+                    /* 徽章样式 */
+                    .badge {
+                        font-size: 0.7rem;
+                        padding: 4px 8px;
+                    }
+
+                    /* 图表容器加载动画 */
+                    .chart-container::before {
+                        content: '';
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 40px;
+                        height: 40px;
+                        border: 3px solid rgba(255, 255, 255, 0.1);
+                        border-top-color: var(--accent-primary);
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        z-index: -1;
+                    }
+
+                    @keyframes spin {
+                        to {
+                            transform: translate(-50%, -50%) rotate(360deg);
+                        }
+                    }
+
+                    /* 成功/警告色彩增强 */
+                    .text-success {
+                        color: var(--accent-success) !important;
+                    }
+
+                    .text-warning {
+                        color: var(--accent-warn) !important;
+                    }
+
+                    .bg-success {
+                        background-color: var(--accent-success) !important;
+                    }
+
+                    .bg-warning {
+                        background-color: var(--accent-warn) !important;
+                    }
                 </style>
             </head>
             <body>
-
                 <div
                     class="container">
                     <!-- Header -->
@@ -181,799 +236,1001 @@
                     <div
                         class="tab-content">
 
-                        <!-- ================= PANEL 1: 区间视图 (含热门组件) ================= -->
+                        <!-- ================= PANEL 1: 区间视图 ================= -->
                         <div
                             class="tab-pane fade show active" id="range-pane">
-
                             <!-- 日期控制器 -->
                             <div class="date-control-bar">
                                 <span class="text-muted small fw-bold">DATE RANGE:</span>
                                 <div class="date-input-group">
-                                    <input type="date" id="startDate">
-                                        <span class="text-muted">-</span>
-                                        <input type="date" id="endDate"></div>
-                                        <button class="btn btn-sm btn-primary px-3" onclick="loadRangeData()">🔍 Query</button>
-                                        <div class="vr mx-2 bg-secondary opacity-25"></div>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="resetToToday()">⏮ Today</button>
-                                    </div>
+                                    <input type="date" id="startDate"></input>
 
+                                    <span class="text-muted">-</span>
+                                    <input type="date" id="endDate"></input>
+
+                                    <button class="btn btn-sm btn-primary px-3" onclick="loadRangeData()">🔍 Query</button>
+                                    <div class="vr mx-2 bg-secondary opacity-25"></div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="resetToToday()">⏮ Today</button>
+                                </div>
+                            </div>
+
+
+                            <!-- ========== 新增：View Analytics（访问统计） ========== -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary bg-opacity-10 text-primary">
+                                    👁️ View Analytics (访问统计)
+                                </div>
+                                <div
+                                    class="card-body">
                                     <!-- KPI Row -->
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Active Users (In Range)</small>
-                                                    <h3 id="range-users">0</h3>
-                                                </div>
+                                    <div class="row mb-4">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <small class="text-muted d-block mb-1">Page Views (PV)</small>
+                                                <h3 class="mb-0" id="range-pv">0</h3>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Interactions</small>
-                                                    <h3 id="range-tracks">0</h3>
-                                                </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <small class="text-muted d-block mb-1">Unique Visitors (UV)</small>
+                                                <h3 class="mb-0" id="range-uv">0</h3>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Avg. Stay Time</small>
-                                                    <h3 id="range-time">0s</h3>
-                                                </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <small class="text-muted d-block mb-1">New Users</small>
+                                                <h3 class="mb-0 text-success" id="range-new-users">0</h3>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <small class="text-muted d-block mb-1">Avg. Duration</small>
+                                                <h3 class="mb-0" id="range-duration">0s</h3>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Row 2: 活跃时段 + 地区分布 -->
+                                    <!-- Charts Row -->
                                     <div class="row">
                                         <div class="col-lg-8">
-                                            <div class="card">
-                                                <div class="card-header">⏰ 活跃时段热力 (Hourly Activity)</div>
+                                            <div class="card bg-dark">
+                                                <div class="card-header">⏰ 访问时段分布 (Hourly Visitors)</div>
                                                 <div class="card-body">
                                                     <div class="chart-container">
-                                                        <canvas id="rangeHourlyChart"></canvas>
+                                                        <canvas id="rangeVisitHourlyChart"></canvas>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-lg-4">
-                                            <div class="card">
-                                                <div class="card-header">📍 地区分布 (Geo)</div>
+                                            <div class="card bg-dark">
+                                                <div class="card-header">🌍 地理分布 (Geo)</div>
                                                 <div class="card-body">
                                                     <div class="chart-container">
-                                                        <canvas id="rangeGeoChart"></canvas>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Row 3: 热门组件 (新增) -->
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="card">
-                                                <div class="card-header">🔥 热门组件 Top 10 (Popular Components)</div>
-                                                <div class="card-body">
-                                                    <div class="chart-container-sm">
-                                                        <canvas id="rangeTargetChart"></canvas>
+                                                        <canvas id="rangeGeoVisitorsChart"></canvas>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- ================= PANEL 2: 总览 ================= -->
-                                <div
-                                    class="tab-pane fade" id="total-pane">
-                                    <!-- KPI Row -->
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Total Users</small>
-                                                    <h3 id="total-users">0</h3>
+                            <!-- ========== Interaction Analytics（可折叠） ========== -->
+                            <div class="card">
+                                <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#interactionSection">
+                                    <span>⚡ Interaction Analytics (交互统计 - 参考数据)</span>
+                                    <span class="badge bg-secondary">Click to Expand</span>
+                                </div>
+                                <div class="collapse" id="interactionSection">
+                                    <div
+                                        class="card-body">
+                                        <!-- KPI Row -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-1">Total Interactions</small>
+                                                    <h3 class="mb-0" id="range-interactions">0</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-1">Avg. Interaction Time</small>
+                                                    <h3 class="mb-0" id="range-interaction-time">0s</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-1">Active Users</small>
+                                                    <h3 class="mb-0" id="range-active-users">0</h3>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Total Views</small>
-                                                    <h3 id="total-tracks">0</h3>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="card kpi-card">
-                                                <div class="card-body">
-                                                    <small>Avg Time (All)</small>
-                                                    <h3 id="total-time">0s</h3>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Trend -->
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="card">
-                                                <div class="card-header">📈 历史访问趋势 (All Time Trend)</div>
-                                                <div class="card-body">
-                                                    <div class="chart-container">
-                                                        <canvas id="totalTimelineChart"></canvas>
+                                        <!-- Charts -->
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="card bg-dark">
+                                                    <div class="card-header">📊 交互时段热力</div>
+                                                    <div class="card-body">
+                                                        <div class="chart-container-sm">
+                                                            <canvas id="rangeHourlyChart"></canvas>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Targets & Geo -->
-                                    <div class="row">
-                                        <div class="col-lg-7">
-                                            <div class="card">
-                                                <div class="card-header">🎯 组件总榜 (All Time Targets)</div>
-                                                <div class="card-body">
-                                                    <div class="chart-container-sm">
-                                                        <canvas id="totalTargetChart"></canvas>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-5">
-                                            <div class="card">
-                                                <div class="card-header">🌍 地区总览 (Total Geo)</div>
-                                                <div class="card-body">
-                                                    <div class="chart-container-sm">
-                                                        <canvas id="totalGeoChart"></canvas>
+                                            <div class="col-lg-6">
+                                                <div class="card bg-dark">
+                                                    <div class="card-header">🔥 热门组件 Top 10</div>
+                                                    <div class="card-body">
+                                                        <div class="chart-container-sm">
+                                                            <canvas id="rangeTargetChart"></canvas>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <!-- ================= PANEL 3: 设置 (Settings) ================= -->
-                                <div class="tab-pane fade" id="settings-pane">
-                                    <div class="row justify-content-center">
-                                        <div class="col-lg-8"></div>
 
-                                        <div class="d-flex justify-content-end mb-3">
-                                            <button class="btn btn-sm btn-outline-info" onclick="requestTokenAndReload()">
-                                                🔄 Reload / Change Token
-                                            </button>
+                        <!-- ================= PANEL 2: 总览 ================= -->
+                        <div
+                            class="tab-pane fade" id="total-pane">
+
+                            <!-- KPI Row -->
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card kpi-card">
+                                        <div class="card-body">
+                                            <small>Total Users</small>
+                                            <h3 id="total-users">0</h3>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card kpi-card">
+                                        <div class="card-body">
+                                            <small>Total Views</small>
+                                            <h3 id="total-tracks">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card kpi-card">
+                                        <div class="card-body">
+                                            <small>Returning Rate</small>
+                                            <h3 id="total-retention">0%</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card kpi-card">
+                                        <div class="card-body">
+                                            <small>Avg Page Depth</small>
+                                            <h3 id="total-depth">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <!-- 1. SMTP 邮件服务器配置 -->
-                                        <div class="card mb-4">
-                                            <div class="card-header text-primary bg-primary bg-opacity-10 border-0">
-                                                📧 邮件发送配置 (Sender / SMTP Config)
+                            <!-- Trend -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">📈 历史访问趋势 (All Time Trend)</div>
+                                        <div class="card-body">
+                                            <div class="chart-container">
+                                                <canvas id="totalTimelineChart"></canvas>
                                             </div>
-                                            <div class="card-body">
-                                                <form id="smtpForm">
-                                                    <div class="row g-3">
-                                                        <div class="col-md-8">
-                                                            <label class="form-label text-muted">SMTP Host</label>
-                                                            <input type="text" class="form-control bg-dark text-white border-secondary" id="smtpHost" placeholder="e.g. smtp.gmail.com"></div>
-                                                            <div class="col-md-4">
-                                                                <label class="form-label text-muted">Port</label>
-                                                                <input type="number" class="form-control bg-dark text-white border-secondary" id="smtpPort" placeholder="587"></div>
-                                                                <div class="col-md-6">
-                                                                    <label class="form-label text-muted">Username (Email)</label>
-                                                                    <input type="email" class="form-control bg-dark text-white border-secondary" id="smtpUser" placeholder="sender@example.com"></div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label text-muted">Password (App Password)</label>
-                                                                        <input type="password" class="form-control bg-dark text-white border-secondary" id="smtpPass" placeholder="******">
-                                                                            <div class="form-text text-secondary">
-                                                                                Use "App Password" if using Gmail/Outlook (Recommended).
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 新增：用户活跃度分布 -->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="card">
+                                        <div class="card-header">📊 用户活跃度分布 (User Engagement)</div>
+                                        <div class="card-body">
+                                            <div class="chart-container-sm">
+                                                <canvas id="totalEngagementChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="card">
+                                        <div class="card-header">🌍 地区总览 (Total Geo)</div>
+                                        <div class="card-body">
+                                            <div class="chart-container-sm">
+                                                <canvas id="totalGeoChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Targets -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">🎯 组件总榜 (All Time Targets)</div>
+                                        <div class="card-body">
+                                            <div class="chart-container-sm">
+                                                <canvas id="totalTargetChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 峰值记录卡片 -->
+                            <div class="card">
+                                <div class="card-header">📊 Peak Records (历史峰值)</div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Max Daily UV</small>
+                                            <h4 id="peak-uv">0</h4>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Max Hourly Traffic</small>
+                                            <h4 id="peak-hourly">0</h4>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Longest Session</small>
+                                            <h4 id="peak-session">0s</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                        <!-- ================= PANEL 3: 设置 (Settings) ================= -->
+                        <div class="tab-pane fade" id="settings-pane">
+
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-sm btn-outline-info" onclick="requestTokenAndReload()">
+                                    🔄 Reload / Change Token
+                                </button>
+                            </div>
+
+                            <!-- 1. SMTP 邮件服务器配置 -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary bg-opacity-10 text-primary">
+                                    👁️ 邮件发送配置 (Sender / SMTP Config)
+                                </div>
+                                <div class="card-body">
+                                    <form id="smtpForm">
+                                        <div class="row g-3">
+                                            <div class="col-md-8">
+                                                <label class="form-label text-muted">SMTP Host</label>
+                                                <input type="text" class="form-control bg-dark text-white border-secondary" id="smtpHost" placeholder="e.g. smtp.gmail.com"></div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label text-muted">Port</label>
+                                                    <input type="number" class="form-control bg-dark text-white border-secondary" id="smtpPort" placeholder="587"></div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label text-muted">Username (Email)</label>
+                                                        <input type="email" class="form-control bg-dark text-white border-secondary" id="smtpUser" placeholder="sender@example.com"></div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label text-muted">Password (App Password)</label>
+                                                            <input type="password" class="form-control bg-dark text-white border-secondary" id="smtpPass" placeholder="******">
+                                                                <div class="form-text text-secondary">
+                                                                    Use "App Password" if using Gmail/Outlook (Recommended).
+                                                                </div>
                                                             </div>
                                                         </div>
-
-                                                        <!-- 2. 接收人 & 调度时间配置 -->
-                                                        <div class="card mb-4">
-                                                            <div class="card-header text-success bg-success bg-opacity-10 border-0">
-                                                                📨 接收人与调度 (Receivers & Schedule)
-                                                            </div>
-                                                            <div
-                                                                class="card-body">
-
-                                                                <!-- 接收人列表 -->
-                                                                <label class="form-label text-muted fw-bold">Receiver Emails</label>
-                                                                <div
-                                                                    id="receivers-container" class="mb-3"><!-- JS 动态生成输入框 -->
-                                                                </div>
-                                                                <button class="btn btn-sm btn-outline-secondary mb-4" onclick="addReceiverField()">
-                                                                    + Add Receiver
-                                                                </button>
-
-                                                                <hr
-                                                                    class="border-secondary opacity-25">
-
-                                                                    <!-- 发送时间列表 -->
-                                                                    <label class="form-label text-muted fw-bold">Report Schedule Times (Daily)</label>
-                                                                    <div
-                                                                        id="times-container" class="mb-3"><!-- JS 动态生成输入框 -->
-                                                                    </div>
-                                                                    <button class="btn btn-sm btn-outline-secondary" onclick="addTimeField()">
-                                                                        + Add Time
-                                                                    </button>
-
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- 3. 操作按钮 -->
-                                                            <div class="d-flex gap-3 mb-5">
-                                                                <button class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="saveConfig()">
-                                                                    💾 Save Configuration
-                                                                </button>
-                                                                <button class="btn btn-outline-warning fw-bold" onclick="testEmail()">
-                                                                    🧪 Send Test Email
-                                                                </button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
+                                                    </form>
                                                 </div>
+                                            </div>
 
 
+                                            <!-- 2. 接收人 & 调度时间配置 -->
+                                            <div class="card mb-4">
+                                                <div class="card-header bg-primary bg-opacity-10 text-primary">
+
+                                                    📨 接收人与调度 (Receivers & Schedule)
+                                                </div>
+                                                <div
+                                                    class="card-body">
+
+                                                    <!-- 接收人列表 -->
+                                                    <label class="form-label text-muted fw-bold">Receiver Emails</label>
+                                                    <div
+                                                        id="receivers-container" class="mb-3"><!-- JS 动态生成输入框 -->
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-secondary mb-4" onclick="addReceiverField()">
+                                                        + Add Receiver
+                                                    </button>
+
+                                                    <hr
+                                                        class="border-secondary opacity-25">
+
+                                                        <!-- 发送时间列表 -->
+                                                        <label class="form-label text-muted fw-bold">Report Schedule Times (Daily)</label>
+                                                        <div
+                                                            id="times-container" class="mb-3"><!-- JS 动态生成输入框 -->
+                                                        </div>
+                                                        <button class="btn btn-sm btn-outline-secondary" onclick="addTimeField()">
+                                                            + Add Time
+                                                        </button>
+                                                    </hr>
+                                                </div>
+                                            </div>
+
+                                            <!-- 3. 操作按钮 -->
+                                            <div class="d-flex gap-3 mb-5">
+                                                <button class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="saveConfig()">
+                                                    💾 Save Configuration
+                                                </button>
+                                                <button class="btn btn-outline-warning fw-bold" onclick="testEmail()">
+                                                    🧪 Send Test Email
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                                        <script>
-                                            // --- Config & Utils ---
-                                            Chart.defaults.color = '#94a3b8';
-                                            Chart.defaults.font.family = "'Inter', sans-serif";
-                                            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
-
-                                            // [修改] 将 const 改为 let，并优先读取 localStorage
-                                            let API_TOKEN = localStorage.getItem('admin_token') || "WPWix32CBJpLYAKiHYsx";
-                                            const apiBase = '/api/stats';
-                                            let configLoaded = false; // [新增] 标记配置是否加载成功，防止覆盖空数据
-                                            let charts = {};
-
-                                            function formatTime(ms) {
-                                                if (! ms) 
-                                                    return '0s';
-                                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
 
-                                                return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
-                                            }
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <script>
+                    // --- Config & Utils ---
+                    Chart.defaults.color = '#94a3b8';
+                    Chart.defaults.font.family = "'Inter', sans-serif";
+                    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
 
-                                            function updateClock() {
-                                                const now = new Date();
-                                                document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
-                                                document.getElementById('clock-date').innerText = now.toLocaleDateString();
-                                            }
-                                            setInterval(updateClock, 1000);
-                                            updateClock();
+                    // [修改] 将 const 改为 let，并优先读取 localStorage
+                    let API_TOKEN = localStorage.getItem('admin_token') || "WPWix32CBJpLYAKiHYsx";
+                    const apiBase = '/api/stats';
+                    let configLoaded = false; // [新增] 标记配置是否加载成功，防止覆盖空数据
+                    let charts = {};
 
-                                            // 日期重置逻辑
-                                            function resetToToday() {
-                                                const today = new Date().toISOString().split('T')[0];
-                                                document.getElementById('startDate').value = today;
-                                                document.getElementById('endDate').value = today;
-                                                loadRangeData(); // 立即查询
-                                            }
-
-                                            // 初始化: 默认选择今天
-                                            resetToToday();
-
-                                            async function fetchData(endpoint) {
-                                                try {
-                                                    const res = await fetch(`${apiBase}/${endpoint}`, {
-                                                        method: 'GET',
-                                                        headers: {
-                                                            'Authorization': API_TOKEN, // 必须携带这个头
-                                                            'Content-Type': 'application/json'
-                                                        }
-                                                    });
-                                                    const json = await res.json();
-                                                    return json.success ? json.data : null;
-                                                } catch (e) {
-                                                    console.error(e);
-                                                    return null;
-                                                }
-                                            }
-
-                                            // 核心渲染函数
-                                            function renderChart(id, type, data, options = {}) {
-                                                const ctx = document.getElementById(id).getContext('2d');
-                                                if (charts[id]) 
-                                                    charts[id].destroy();
-                                                
+                    function formatTime(ms) {
+                        if (! ms) 
+                            return '0s';
+                        
 
 
-                                                // 默认配置
-                                                const defaultOptions = {
-                                                    responsive: true,
-                                                    maintainAspectRatio: false,
-                                                    plugins: {
-                                                        legend: {
-                                                            display: false
-                                                        }
-                                                    },
-                                                    scales: {
-                                                        x: {
-                                                            grid: {
-                                                                display: false
-                                                            }
-                                                        }, // 默认隐藏X网格
-                                                        y: {
-                                                            grid: {
-                                                                color: 'rgba(255,255,255,0.05)'
-                                                            },
-                                                            beginAtZero: true
-                                                        }
-                                                    }
-                                                };
+                        return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(1) + 's';
+                    }
 
-                                                // 深度合并配置 (简单版)
-                                                const finalOptions = {
-                                                    ... defaultOptions,
-                                                    ...options
-                                                };
-                                                if (options.scales) 
-                                                    finalOptions.scales = {
-                                                        ... defaultOptions.scales,
-                                                        ...options.scales
-                                                    };
-                                                
+                    function updateClock() {
+                        const now = new Date();
+                        document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-US', {hour12: false});
+                        document.getElementById('clock-date').innerText = now.toLocaleDateString();
+                    }
+                    setInterval(updateClock, 1000);
+                    updateClock();
 
+                    // 日期重置逻辑
+                    function resetToToday() {
+                        const today = new Date().toISOString().split('T')[0];
+                        document.getElementById('startDate').value = today;
+                        document.getElementById('endDate').value = today;
+                        loadRangeData(); // 立即查询
+                    }
 
-                                                if (options.plugins) 
-                                                    finalOptions.plugins = {
-                                                        ... defaultOptions.plugins,
-                                                        ...options.plugins
-                                                    };
-                                                
+                    // 初始化: 默认选择今天
+                    resetToToday();
 
+                    async function fetchData(endpoint) {
+                        try {
+                            const res = await fetch(`${apiBase}/${endpoint}`, {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': API_TOKEN, // 必须携带这个头
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            const json = await res.json();
+                            return json.success ? json.data : null;
+                        } catch (e) {
+                            console.error(e);
+                            return null;
+                        }
+                    }
 
-                                                charts[id] = new Chart(ctx, {type, data, options: finalOptions});
-                                            }
-
-                                            // --- 1. 加载【区间视图】数据 ---
-                                            async function loadRangeData() {
-                                                const start = document.getElementById('startDate').value;
-                                                const end = document.getElementById('endDate').value;
-                                                const query = `?startDate=${start}&endDate=${end}`;
-
-                                                // KPI
-                                                const overview = await fetchData(`daily/overview${query}`);
-                                                if (overview) {
-                                                    document.getElementById('range-users').innerText = overview.active_users;
-                                                    document.getElementById('range-tracks').innerText = overview.total_interactions;
-                                                    document.getElementById('range-time').innerText = formatTime(overview.avg_stay_time);
-                                                }
-
-                                                // Hourly (Line)
-                                                const hourly = await fetchData(`daily/hourly${query}`);
-                                                if (hourly) {
-                                                    const hours = Array.from({
-                                                        length: 24
-                                                    }, (_, i) => i);
-                                                    const dataMap = {};
-                                                    hourly.forEach(d => dataMap[d._id] = d.count);
-
-                                                    const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
-                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                                                    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
-                                                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
-
-                                                    renderChart('rangeHourlyChart', 'line', {
-                                                        labels: hours.map(h => `${h}:00`),
-                                                        datasets: [
-                                                            {
-                                                                label: 'Interactions',
-                                                                data: hours.map(h => dataMap[h] || 0),
-                                                                borderColor: '#f59e0b',
-                                                                backgroundColor: gradient,
-                                                                fill: true,
-                                                                tension: 0.4
-                                                            }
-                                                        ]
-                                                    });
-                                                }
-
-                                                // Geo (Bar)
-                                                const geo = await fetchData(`daily/geolocation${query}`);
-                                                if (geo) {
-                                                    renderChart('rangeGeoChart', 'bar', {
-                                                        labels: geo.map(d => d._id),
-                                                        datasets: [
-                                                            {
-                                                                label: 'Views',
-                                                                data: geo.map(d => d.count),
-                                                                backgroundColor: '#10b981',
-                                                                borderRadius: 4
-                                                            }
-                                                        ]
-                                                    });
-                                                }
-
-                                                // Targets (Horizontal Bar) - 新增
-                                                const targets = await fetchData(`daily/targets${query}`);
-                                                if (targets) {
-                                                    renderChart('rangeTargetChart', 'bar', {
-                                                        labels: targets.map(d => d._id),
-                                                        datasets: [
-                                                            {
-                                                                label: 'Clicks',
-                                                                data: targets.map(d => d.count),
-                                                                backgroundColor: '#8b5cf6',
-                                                                borderRadius: 4
-                                                            }
-                                                        ]
-                                                    }, {indexAxis: 'y'});
-                                                }
-                                            }
-
-                                            // --- 2. 加载【总览】数据 ---
-                                            async function loadTotalData() {
-                                                const ov = await fetchData('overview');
-                                                const time = await fetchData('staytime');
-                                                if (ov) {
-                                                    document.getElementById('total-users').innerText = ov.total_users;
-                                                    document.getElementById('total-tracks').innerText = ov.total_tracks;
-                                                }
-                                                if (time) 
-                                                    document.getElementById('total-time').innerText = formatTime(time);
-                                                
+                    // 核心渲染函数
+                    function renderChart(id, type, data, options = {}) {
+                        const ctx = document.getElementById(id).getContext('2d');
+                        if (charts[id]) 
+                            charts[id].destroy();
+                        
 
 
-                                                // Timeline Trend (修复直线问题)
-                                                const timeline = await fetchData('timeline');
-                                                if (timeline) {
-                                                    const ctx = document.getElementById('totalTimelineChart').getContext('2d');
-                                                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                                                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-                                                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+                        // 默认配置
+                        const defaultOptions = {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }, // 默认隐藏X网格
+                                y: {
+                                    grid: {
+                                        color: 'rgba(255,255,255,0.05)'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        };
 
-                                                    renderChart('totalTimelineChart', 'line', {
-                                                        labels: timeline.map(d => d._id),
-                                                        datasets: [
-                                                            {
-                                                                label: 'Visits',
-                                                                data: timeline.map(d => d.count),
-                                                                borderColor: '#3b82f6',
-                                                                backgroundColor: gradient,
-                                                                fill: true,
-                                                                tension: 0.3 // 稍微降低平滑度，避免数据少时曲线太夸张
-                                                            }
-                                                        ]
-                                                    }, {
-                                                        scales: {
-                                                            y: {
-                                                                beginAtZero: true,
-                                                                suggestedMax: 10, // 关键：如果数据很少（比如只有1），这能保证Y轴不至于只显示一个点
-                                                                grid: {
-                                                                    color: 'rgba(255,255,255,0.05)'
-                                                                }
-                                                            }
-                                                        }
-                                                    });
-                                                }
+                        // 深度合并配置 (简单版)
+                        const finalOptions = {
+                            ... defaultOptions,
+                            ...options
+                        };
+                        if (options.scales) 
+                            finalOptions.scales = {
+                                ... defaultOptions.scales,
+                                ...options.scales
+                            };
+                        
 
-                                                // Total Targets
-                                                const targets = await fetchData('targets');
-                                                if (targets) {
-                                                    renderChart('totalTargetChart', 'bar', {
-                                                        labels: targets.map(d => d._id),
-                                                        datasets: [
-                                                            {
-                                                                data: targets.map(d => d.count),
-                                                                backgroundColor: '#8b5cf6',
-                                                                borderRadius: 4
-                                                            }
-                                                        ]
-                                                    }, {indexAxis: 'y'});
-                                                }
 
-                                                // Total Geo (修复: 移除背景线条)
-                                                const geo = await fetchData('geolocation');
-                                                if (geo) {
-                                                    renderChart('totalGeoChart', 'doughnut', {
-                                                        labels: geo.map(d => d._id),
-                                                        datasets: [
-                                                            {
-                                                                data: geo.map(d => d.count),
-                                                                backgroundColor: [
-                                                                    '#3b82f6',
-                                                                    '#8b5cf6',
-                                                                    '#10b981',
-                                                                    '#f59e0b',
-                                                                    '#ef4444'
-                                                                ],
-                                                                borderWidth: 0
-                                                            }
-                                                        ]
-                                                    }, {
-                                                        scales: {
-                                                            x: {
-                                                                display: false
-                                                            },
-                                                            y: {
-                                                                display: false
-                                                            }
-                                                        }, // 强制隐藏坐标轴
-                                                        plugins: {
-                                                            legend: {
-                                                                display: true,
-                                                                position: 'right'
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            }
+                        if (options.plugins) 
+                            finalOptions.plugins = {
+                                ... defaultOptions.plugins,
+                                ...options.plugins
+                            };
+                        
 
-                                            // ===============================================
-                                            // SETTINGS & HOOK CONFIGURATION LOGIC
-                                            // ===============================================
 
-                                            // 3. 动态生成带删除按钮的输入框
-                                            function createRemovableInput(containerId, value = "", type = "text", placeholder = "") {
-                                                const container = document.getElementById(containerId);
-                                                const div = document.createElement('div');
-                                                div.className = "input-group mb-2";
+                        charts[id] = new Chart(ctx, {type, data, options: finalOptions});
+                    }
 
-                                                div.innerHTML = `
+                    // --- 1. 加载【区间视图】数据（重构版） ---
+                    async function loadRangeData() {
+                        const start = document.getElementById('startDate').value;
+                        const end = document.getElementById('endDate').value;
+                        const query = `?startDate=${start}&endDate=${end}`;
+
+                        // ========== View Analytics ==========
+                        const views = await fetchData(`daily/views${query}`);
+                        if (views) {
+                            document.getElementById('range-pv').innerText = views.page_views;
+                            document.getElementById('range-uv').innerText = views.unique_visitors;
+                            document.getElementById('range-new-users').innerText = views.new_users;
+                        }
+
+                        // 平均停留时长
+                        const duration = await fetchData(`daily/avg-duration${query}`);
+                        if (duration !== null) {
+                            document.getElementById('range-duration').innerText = formatTime(duration);
+                        }
+
+                        // 访问时段分布（基于 UV）
+                        const visitHourly = await fetchData(`daily/visit-hourly${query}`);
+                        if (visitHourly) {
+                            const hours = Array.from({
+                                length: 24
+                            }, (_, i) => i);
+                            const dataMap = {};
+                            visitHourly.forEach(d => dataMap[d._id] = d.unique_visitors);
+
+                            const ctx = document.getElementById('rangeVisitHourlyChart').getContext('2d');
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+                            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+                            renderChart('rangeVisitHourlyChart', 'line', {
+                                labels: hours.map(h => `${h}:00`),
+                                datasets: [
+                                    {
+                                        label: 'Unique Visitors',
+                                        data: hours.map(h => dataMap[h] || 0),
+                                        borderColor: '#3b82f6',
+                                        backgroundColor: gradient,
+                                        fill: true,
+                                        tension: 0.4
+                                    }
+                                ]
+                            });
+                        }
+
+                        // 地理分布（基于 UV）
+                        const geoVisitors = await fetchData(`daily/geo-visitors${query}`);
+                        if (geoVisitors) {
+                            renderChart('rangeGeoVisitorsChart', 'bar', {
+                                labels: geoVisitors.map(d => d._id),
+                                datasets: [
+                                    {
+                                        label: 'Visitors',
+                                        data: geoVisitors.map(d => d.count),
+                                        backgroundColor: '#10b981',
+                                        borderRadius: 4
+                                    }
+                                ]
+                            });
+                        }
+
+                        // ========== Interaction Analytics（折叠区域） ==========
+                        const overview = await fetchData(`daily/overview${query}`);
+                        if (overview) {
+                            document.getElementById('range-active-users').innerText = overview.active_users;
+                            document.getElementById('range-interactions').innerText = overview.total_interactions;
+                            document.getElementById('range-interaction-time').innerText = formatTime(overview.avg_stay_time);
+                        }
+
+                        // 交互时段热力
+                        const hourly = await fetchData(`daily/hourly${query}`);
+                        if (hourly) {
+                            const hours = Array.from({
+                                length: 24
+                            }, (_, i) => i);
+                            const dataMap = {};
+                            hourly.forEach(d => dataMap[d._id] = d.count);
+
+                            const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+                            gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
+                            gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+                            renderChart('rangeHourlyChart', 'line', {
+                                labels: hours.map(h => `${h}:00`),
+                                datasets: [
+                                    {
+                                        label: 'Interactions',
+                                        data: hours.map(h => dataMap[h] || 0),
+                                        borderColor: '#f59e0b',
+                                        backgroundColor: gradient,
+                                        fill: true,
+                                        tension: 0.4
+                                    }
+                                ]
+                            });
+                        }
+
+                        // 热门组件
+                        const targets = await fetchData(`daily/targets${query}`);
+                        if (targets) {
+                            renderChart('rangeTargetChart', 'bar', {
+                                labels: targets.map(d => d._id),
+                                datasets: [
+                                    {
+                                        label: 'Clicks',
+                                        data: targets.map(d => d.count),
+                                        backgroundColor: '#8b5cf6',
+                                        borderRadius: 4
+                                    }
+                                ]
+                            }, {indexAxis: 'y'});
+                        }
+                    }
+
+                    // --- 2. 加载【总览】数据（增强版） ---
+                    async function loadTotalData() { // 基础 KPI
+                        const ov = await fetchData('overview');
+                        const time = await fetchData('staytime');
+                        if (ov) {
+                            document.getElementById('total-users').innerText = ov.total_users;
+                            document.getElementById('total-tracks').innerText = ov.total_tracks;
+                        }
+
+                        // 回访率
+                        const retention = await fetchData('retention');
+                        if (retention) {
+                            document.getElementById('total-retention').innerText = retention.rate + '%';
+                        }
+
+                        // 页面深度
+                        const depth = await fetchData('page-depth');
+                        if (depth) {
+                            document.getElementById('total-depth').innerText = depth;
+                        }
+
+                        // Timeline Trend
+                        const timeline = await fetchData('timeline');
+                        if (timeline) {
+                            const ctx = document.getElementById('totalTimelineChart').getContext('2d');
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+                            renderChart('totalTimelineChart', 'line', {
+                                labels: timeline.map(d => d._id),
+                                datasets: [
+                                    {
+                                        label: 'Visits',
+                                        data: timeline.map(d => d.count),
+                                        borderColor: '#3b82f6',
+                                        backgroundColor: gradient,
+                                        fill: true,
+                                        tension: 0.3
+                                    }
+                                ]
+                            }, {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        suggestedMax: 10,
+                                        grid: {
+                                            color: 'rgba(255,255,255,0.05)'
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // 用户活跃度分布
+                        const engagement = await fetchData('user-engagement');
+                        if (engagement) {
+                            const labels = engagement.map(d => {
+                                if (d._id === "100+") 
+                                    return "100+";
+                                
+
+
+                                const next = engagement[engagement.indexOf(d) + 1];
+                                return next ? `${
+                                    d._id
+                                }-${
+                                    next._id - 1
+                                }` : `${
+                                    d._id
+                                }+`;
+                            });
+
+                            renderChart('totalEngagementChart', 'bar', {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Users',
+                                        data: engagement.map(d => d.count),
+                                        backgroundColor: '#8b5cf6',
+                                        borderRadius: 4
+                                    }
+                                ]
+                            }, {
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Visit Count Range'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Number of Users'
+                                        },
+                                        beginAtZero: true
+                                    }
+                                }
+                            });
+                        }
+
+                        // Total Targets
+                        const targets = await fetchData('targets');
+                        if (targets) {
+                            renderChart('totalTargetChart', 'bar', {
+                                labels: targets.map(d => d._id),
+                                datasets: [
+                                    {
+                                        data: targets.map(d => d.count),
+                                        backgroundColor: '#8b5cf6',
+                                        borderRadius: 4
+                                    }
+                                ]
+                            }, {indexAxis: 'y'});
+                        }
+
+                        // Total Geo
+                        const geo = await fetchData('geolocation');
+                        if (geo) {
+                            renderChart('totalGeoChart', 'doughnut', {
+                                labels: geo.map(d => d._id),
+                                datasets: [
+                                    {
+                                        data: geo.map(d => d.count),
+                                        backgroundColor: [
+                                            '#3b82f6',
+                                            '#8b5cf6',
+                                            '#10b981',
+                                            '#f59e0b',
+                                            '#ef4444'
+                                        ],
+                                        borderWidth: 0
+                                    }
+                                ]
+                            }, {
+                                scales: {
+                                    x: {
+                                        display: false
+                                    },
+                                    y: {
+                                        display: false
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'right'
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    // ===============================================
+                    // SETTINGS & HOOK CONFIGURATION LOGIC
+                    // ===============================================
+
+                    // 3. 动态生成带删除按钮的输入框
+                    function createRemovableInput(containerId, value = "", type = "text", placeholder = "") {
+                        const container = document.getElementById(containerId);
+                        const div = document.createElement('div');
+                        div.className = "input-group mb-2";
+
+                        div.innerHTML = `
         <input type="${type}" class="form-control bg-dark text-white border-secondary" value="${value}" placeholder="${placeholder}">
         <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()">×</button>
     `;
-                                                container.appendChild(div);
-                                            }
+                        container.appendChild(div);
+                    }
 
-                                            // 添加接收人输入框
-                                            function addReceiverField(value = "") {
-                                                createRemovableInput('receivers-container', value, 'email', 'receiver@example.com');
-                                            }
+                    // 添加接收人输入框
+                    function addReceiverField(value = "") {
+                        createRemovableInput('receivers-container', value, 'email', 'receiver@example.com');
+                    }
 
-                                            // 添加时间输入框 (使用浏览器原生 Time Picker)
-                                            function addTimeField(value = "") {
-                                                createRemovableInput('times-container', value, 'time');
-                                            }
+                    // 添加时间输入框 (使用浏览器原生 Time Picker)
+                    function addTimeField(value = "") {
+                        createRemovableInput('times-container', value, 'time');
+                    }
 
-                                            // 2. 从后端加载配置
-                                            async function loadConfig() {
-                                                console.log("--- [Debug] loadConfig 触发 ---");
-                                                console.log("[Debug] 当前 API_TOKEN:", API_TOKEN);
-                                                console.log("[Debug] configLoaded 状态:", configLoaded);
+                    // 2. 从后端加载配置
+                    async function loadConfig() {
+                        console.log("--- [Debug] loadConfig 触发 ---");
+                        console.log("[Debug] 当前 API_TOKEN:", API_TOKEN);
+                        console.log("[Debug] configLoaded 状态:", configLoaded);
 
-                                                // 1. 如果已经加载成功过，直接跳过
-                                                if (configLoaded) {
-                                                    console.log("[Debug] 配置已加载过，跳过请求。");
-                                                    return;
-                                                }
+                        // 1. 如果已经加载成功过，直接跳过
+                        if (configLoaded) {
+                            console.log("[Debug] 配置已加载过，跳过请求。");
+                            return;
+                        }
 
-                                                try {
-                                                    console.log("[Debug] 开始向 /api/admin/config 发送请求...");
-                                                    const res = await fetch('/api/admin/config', {
-                                                        headers: {
-                                                            'X-Admin-Token': API_TOKEN
-                                                        }
+                        try {
+                            console.log("[Debug] 开始向 /api/admin/config 发送请求...");
+                            const res = await fetch('/api/admin/config', {
+                                headers: {
+                                    'X-Admin-Token': API_TOKEN
+                                }
 
-                                                    });
+                            });
 
-                                                    console.log("[Debug] 服务器响应状态码 (Status):", res.status);
+                            console.log("[Debug] 服务器响应状态码 (Status):", res.status);
 
-                                                    // 2. 核心修复：如果是权限错误 (403 或 401)，直接 return，什么都不做
-                                                    if (res.status === 403 || res.status === 401) {
-                                                        console.warn("[Silent Load] ❌ 权限不足 (Token 无效)。保持静默，不弹窗。");
-                                                        console.warn("提示: 请点击 'Save Configuration' 或 'Reload' 按钮来手动更新 Token。");
-                                                        return;
-                                                    }
+                            // 2. 核心修复：如果是权限错误 (403 或 401)，直接 return，什么都不做
+                            if (res.status === 403 || res.status === 401) {
+                                console.warn("[Silent Load] ❌ 权限不足 (Token 无效)。保持静默，不弹窗。");
+                                console.warn("提示: 请点击 'Save Configuration' 或 'Reload' 按钮来手动更新 Token。");
+                                return;
+                            }
 
-                                                    // 3. 处理正常响应
-                                                    const json = await res.json();
-                                                    console.log("[Debug] 响应数据:", json);
+                            // 3. 处理正常响应
+                            const json = await res.json();
+                            console.log("[Debug] 响应数据:", json);
 
-                                                    if (json.success) {
-                                                        const conf = json.data;
+                            if (json.success) {
+                                const conf = json.data;
 
-                                                        // 填充数据
-                                                        document.getElementById('smtpHost').value = conf.smtp.host || "";
-                                                        document.getElementById('smtpPort').value = conf.smtp.port || 465;
-                                                        document.getElementById('smtpUser').value = conf.smtp.user || "";
-                                                        document.getElementById('smtpPass').value = conf.smtp.pass || "";
+                                // 填充数据
+                                document.getElementById('smtpHost').value = conf.smtp.host || "";
+                                document.getElementById('smtpPort').value = conf.smtp.port || 465;
+                                document.getElementById('smtpUser').value = conf.smtp.user || "";
+                                document.getElementById('smtpPass').value = conf.smtp.pass || "";
 
-                                                        // 填充接收人
-                                                        const rContainer = document.getElementById('receivers-container');
-                                                        rContainer.innerHTML = '';
-                                                        if (conf.receivers && conf.receivers.length > 0) {
-                                                            conf.receivers.forEach(r => addReceiverField(r));
-                                                        } else {
-                                                            addReceiverField();
-                                                        }
+                                // 填充接收人
+                                const rContainer = document.getElementById('receivers-container');
+                                rContainer.innerHTML = '';
+                                if (conf.receivers && conf.receivers.length > 0) {
+                                    conf.receivers.forEach(r => addReceiverField(r));
+                                } else {
+                                    addReceiverField();
+                                }
 
-                                                        // 填充时间
-                                                        const tContainer = document.getElementById('times-container');
-                                                        tContainer.innerHTML = '';
-                                                        if (conf.report_times && conf.report_times.length > 0) {
-                                                            conf.report_times.forEach(t => addTimeField(t));
-                                                        } else {
-                                                            addTimeField("12:00");
-                                                        }
+                                // 填充时间
+                                const tContainer = document.getElementById('times-container');
+                                tContainer.innerHTML = '';
+                                if (conf.report_times && conf.report_times.length > 0) {
+                                    conf.report_times.forEach(t => addTimeField(t));
+                                } else {
+                                    addTimeField("12:00");
+                                }
 
-                                                        // 标记加载成功
-                                                        configLoaded = true;
-                                                        console.log("[Debug] ✅ 配置加载成功，configLoaded 已设为 true");
-                                                    } else {
-                                                        console.warn("[Debug] 服务器返回 success: false", json.error);
-                                                    }
-                                                } catch (e) { // 网络错误也不弹窗，仅记录日志
-                                                    console.error("[Silent Load] ❌ 网络请求出错:", e);
-                                                }
-                                            }
+                                // 标记加载成功
+                                configLoaded = true;
+                                console.log("[Debug] ✅ 配置加载成功，configLoaded 已设为 true");
+                            } else {
+                                console.warn("[Debug] 服务器返回 success: false", json.error);
+                            }
+                        } catch (e) { // 网络错误也不弹窗，仅记录日志
+                            console.error("[Silent Load] ❌ 网络请求出错:", e);
+                        }
+                    }
 
-                                            // 3. 保存配置到后端
-                                            async function saveConfig() {
-                                                // 收集 SMTP 数据
-                                                // [安全检查] 如果配置从未加载成功过，保存可能会导致原有数据被空数据覆盖
-                                                // 这里我们尝试先验证一次 Token
-                                                if (! configLoaded) {
-                                                    const confirmLoad = confirm("⚠️ 配置尚未加载成功 (可能是权限不足)。\n直接保存可能会覆盖原有配置。\n\n点击 [确定] 输入 Token 并先加载配置。\n点击 [取消] 强制保存当前表单。");
-                                                    if (confirmLoad) {
-                                                        await requestTokenAndReload();
-                                                        return;
-                                                    }
-                                                }
+                    // 3. 保存配置到后端
+                    async function saveConfig() {
+                        // 收集 SMTP 数据
+                        // [安全检查] 如果配置从未加载成功过，保存可能会导致原有数据被空数据覆盖
+                        // 这里我们尝试先验证一次 Token
+                        if (! configLoaded) {
+                            const confirmLoad = confirm("⚠️ 配置尚未加载成功 (可能是权限不足)。\n直接保存可能会覆盖原有配置。\n\n点击 [确定] 输入 Token 并先加载配置。\n点击 [取消] 强制保存当前表单。");
+                            if (confirmLoad) {
+                                await requestTokenAndReload();
+                                return;
+                            }
+                        }
 
-                                                // 收集表单数据
-                                                const smtp = {
-                                                    host: document.getElementById('smtpHost').value.trim(),
-                                                    port: parseInt(document.getElementById('smtpPort').value) || 465,
-                                                    secure: true,
-                                                    user: document.getElementById('smtpUser').value.trim(),
-                                                    pass: document.getElementById('smtpPass').value.trim()
-                                                };
+                        // 收集表单数据
+                        const smtp = {
+                            host: document.getElementById('smtpHost').value.trim(),
+                            port: parseInt(document.getElementById('smtpPort').value) || 465,
+                            secure: true,
+                            user: document.getElementById('smtpUser').value.trim(),
+                            pass: document.getElementById('smtpPass').value.trim()
+                        };
 
-                                                const receivers = [];
-                                                document.querySelectorAll('#receivers-container input').forEach(input => {
-                                                    if (input.value.trim()) 
-                                                        receivers.push(input.value.trim());
-                                                    
-
-
-                                                });
-
-                                                const report_times = [];
-                                                document.querySelectorAll('#times-container input').forEach(input => {
-                                                    if (input.value.trim()) 
-                                                        report_times.push(input.value.trim());
-                                                    
+                        const receivers = [];
+                        document.querySelectorAll('#receivers-container input').forEach(input => {
+                            if (input.value.trim()) 
+                                receivers.push(input.value.trim());
+                            
 
 
-                                                });
+                        });
 
-                                                // 发送请求
-                                                try {
-                                                    const res = await fetch('/api/admin/config', {
-                                                        method: 'POST',
-                                                        headers: {
-                                                            'X-Admin-Token': API_TOKEN,
-                                                            'Content-Type': 'application/json'
-                                                        },
-                                                        body: JSON.stringify(
-                                                            {smtp, receivers, report_times}
-                                                        )
-                                                    });
-
-                                                    // [核心] 如果返回 403 禁止访问 -> 弹出 Auth Check
-                                                    if (res.status === 403) {
-                                                        await handleAuthFailure(saveConfig); // 传入当前函数以便重试
-                                                        return;
-                                                    }
-
-                                                    const json = await res.json();
-                                                    if (json.success) {
-                                                        alert("✅ Configuration Saved Successfully!");
-                                                        configLoaded = true; // 保存成功也视为加载成功
-                                                    } else {
-                                                        alert("❌ Error: " + json.error);
-                                                    }
-                                                } catch (e) {
-                                                    alert("Server Error");
-                                                }
-                                            }
-
-                                            // 4. 发送测试邮件
-                                            async function testEmail() { // 1. 确认提示
-                                                const confirmed = confirm("📧 发送测试报表 (Send Test Report)\n\n" + "这将根据当前数据库中的真实数据，生成一份比对报表，\n" + "并发送到配置的接收人邮箱列表。\n\n" + "确定要发送吗？");
-
-                                                if (! confirmed) 
-                                                    return;
-                                                
+                        const report_times = [];
+                        document.querySelectorAll('#times-container input').forEach(input => {
+                            if (input.value.trim()) 
+                                report_times.push(input.value.trim());
+                            
 
 
-                                                // 2. 定义发送逻辑 (封装以便重试)
-                                                const performTest = async () => {
-                                                    try {
-                                                        const res = await fetch('/api/admin/test-email', {
-                                                            method: 'POST',
-                                                            headers: {
-                                                                'X-Admin-Token': API_TOKEN
-                                                            }
-                                                        });
+                        });
 
-                                                        // 权限拦截
-                                                        if (res.status === 403) {
-                                                            await handleAuthFailure(performTest); // 失败则弹窗输入 Token 并重试
-                                                            return;
-                                                        }
+                        // 发送请求
+                        try {
+                            const res = await fetch('/api/admin/config', {
+                                method: 'POST',
+                                headers: {
+                                    'X-Admin-Token': API_TOKEN,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(
+                                    {smtp, receivers, report_times}
+                                )
+                            });
 
-                                                        const json = await res.json();
-                                                        if (json.success) {
-                                                            alert("✅ 邮件已发送! (Email Sent)\n请检查收件箱，确认收到包含数据表格的报表。");
-                                                        } else {
-                                                            alert("❌ 发送失败 (Failed): " + json.error);
-                                                        }
-                                                    } catch (e) {
-                                                        alert("Connection Error");
-                                                    }
-                                                };
+                            // [核心] 如果返回 403 禁止访问 -> 弹出 Auth Check
+                            if (res.status === 403) {
+                                await handleAuthFailure(saveConfig); // 传入当前函数以便重试
+                                return;
+                            }
 
-                                                // 3. 执行
-                                                performTest();
-                                            }
+                            const json = await res.json();
+                            if (json.success) {
+                                alert("✅ Configuration Saved Successfully!");
+                                configLoaded = true; // 保存成功也视为加载成功
+                            } else {
+                                alert("❌ Error: " + json.error);
+                            }
+                        } catch (e) {
+                            alert("Server Error");
+                        }
+                    }
 
-                                            // [新增] 处理权限不足的通用函数
-                                            async function handleAuthFailure(retryCallback) {
-                                                const newToken = prompt("🔒 权限验证失败 (Access Denied)\n\n请输入 Admin Token 继续:");
-                                                if (newToken) {
-                                                    API_TOKEN = newToken;
-                                                    localStorage.setItem('admin_token', newToken);
-                                                    // 记住 Token
-                                                    // 递归重试刚才的操作
-                                                    if (retryCallback) 
-                                                        retryCallback();
-                                                    
+                    // 4. 发送测试邮件
+                    async function testEmail() { // 1. 确认提示
+                        const confirmed = confirm("📧 发送测试报表 (Send Test Report)\n\n" + "这将根据当前数据库中的真实数据，生成一份比对报表，\n" + "并发送到配置的接收人邮箱列表。\n\n" + "确定要发送吗？");
+
+                        if (! confirmed) 
+                            return;
+                        
 
 
-                                                }
-                                            }
+                        // 2. 定义发送逻辑 (封装以便重试)
+                        const performTest = async () => {
+                            try {
+                                const res = await fetch('/api/admin/test-email', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-Admin-Token': API_TOKEN
+                                    }
+                                });
 
-                                            // [新增] 主动请求 Token 并加载配置
-                                            async function requestTokenAndReload() {
-                                                const newToken = prompt("🔄 Please enter Admin Token to load configuration:");
-                                                if (newToken) {
-                                                    API_TOKEN = newToken;
-                                                    localStorage.setItem('admin_token', newToken);
-                                                    await loadConfig();
-                                                    if (configLoaded) {
-                                                        alert("✅ Config loaded!");
-                                                    } else {
-                                                        alert("❌ Load failed. Token might be wrong.");
-                                                    }
-                                                }
-                                            }
+                                // 权限拦截
+                                if (res.status === 403) {
+                                    await handleAuthFailure(performTest); // 失败则弹窗输入 Token 并重试
+                                    return;
+                                }
 
-                                            // 5. 监听 Tab 切换，实现懒加载
-                                            // 当用户点击 "Settings" Tab 时，才去请求后端加载配置
-                                            const settingsTabBtn = document.getElementById('settings-tab');
-                                            settingsTabBtn.addEventListener('shown.bs.tab', () => {
-                                                loadConfig();
-                                            });
+                                const json = await res.json();
+                                if (json.success) {
+                                    alert("✅ 邮件已发送! (Email Sent)\n请检查收件箱，确认收到包含数据表格的报表。");
+                                } else {
+                                    alert("❌ 发送失败 (Failed): " + json.error);
+                                }
+                            } catch (e) {
+                                alert("Connection Error");
+                            }
+                        };
 
-                                            // Tab 监听 (懒加载)
-                                            const totalTabBtn = document.getElementById('total-tab');
-                                            totalTabBtn.addEventListener('shown.bs.tab', () => {
-                                                loadTotalData();
-                                                window.dispatchEvent(new Event('resize'));
-                                            }, {once: true});
+                        // 3. 执行
+                        performTest();
+                    }
 
-                                            // 监听所有 Tab 切换以修正图表尺寸
-                                            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
-                                                el.addEventListener('shown.bs.tab', () => {
-                                                    window.dispatchEvent(new Event('resize'));
-                                                });
-                                            });
-                                        </script>
-                                    </body>
-                                </html>
-                            </body>
+                    // [新增] 处理权限不足的通用函数
+                    async function handleAuthFailure(retryCallback) {
+                        const newToken = prompt("🔒 权限验证失败 (Access Denied)\n\n请输入 Admin Token 继续:");
+                        if (newToken) {
+                            API_TOKEN = newToken;
+                            localStorage.setItem('admin_token', newToken);
+                            // 记住 Token
+                            // 递归重试刚才的操作
+                            if (retryCallback) 
+                                retryCallback();
+                            
+
+
+                        }
+                    }
+
+                    // [新增] 主动请求 Token 并加载配置
+                    async function requestTokenAndReload() {
+                        const newToken = prompt("🔄 Please enter Admin Token to load configuration:");
+                        if (newToken) {
+                            API_TOKEN = newToken;
+                            localStorage.setItem('admin_token', newToken);
+                            await loadConfig();
+                            if (configLoaded) {
+                                alert("✅ Config loaded!");
+                            } else {
+                                alert("❌ Load failed. Token might be wrong.");
+                            }
+                        }
+                    }
+
+                    // 5. 监听 Tab 切换，实现懒加载
+                    // 当用户点击 "Settings" Tab 时，才去请求后端加载配置
+                    const settingsTabBtn = document.getElementById('settings-tab');
+                    settingsTabBtn.addEventListener('shown.bs.tab', () => {
+                        loadConfig();
+                    });
+
+                    // Tab 监听 (懒加载)
+                    const totalTabBtn = document.getElementById('total-tab');
+                    totalTabBtn.addEventListener('shown.bs.tab', () => {
+                        loadTotalData();
+                        window.dispatchEvent(new Event('resize'));
+                    }, {once: true});
+
+                    // 监听所有 Tab 切换以修正图表尺寸
+                    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(el => {
+                        el.addEventListener('shown.bs.tab', () => {
+                            window.dispatchEvent(new Event('resize'));
+                        });
+                    });
+                </script>
+            </body>
+        </html>
+    </body>
+</head></html></head></html></html>

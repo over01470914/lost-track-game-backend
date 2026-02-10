@@ -506,6 +506,392 @@ app.get("/api/stats/daily/targets", async (req, res) => {
   }
 });
 
+// ===============================================
+// 新增：View Analytics（真实访问统计）
+// ===============================================
+
+// 1. 区间内的 PV/UV 统计
+app.get("/api/stats/daily/views", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const dateQuery = getDateRangeQuery(startDate, endDate);
+
+    // PV (Page Views) - 所有 tracks 记录数
+    const pvStats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.created_at": dateQuery } },
+      { $count: "total" },
+    ]);
+
+    // UV (Unique Visitors) - 去重 IP 数
+    const uvList = await UserTracking.distinct("user_ip", {
+      "tracks.created_at": dateQuery,
+    });
+
+    // 新用户数（首次访问在区间内的）
+    const newUsers = await UserTracking.countDocuments({
+      "profile.first_login": dateQuery,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        page_views: pvStats[0]?.total || 0,
+        unique_visitors: uvList.length,
+        new_users: newUsers,
+        returning_users: uvList.length - newUsers,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 2. 区间内的访问时段分布（基于 UV 而非 Interaction）
+app.get("/api/stats/daily/visit-hourly", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const dateQuery = getDateRangeQuery(startDate, endDate);
+
+    // 按小时统计独立访客数（通过 user_ip 去重）
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.created_at": dateQuery } },
+      {
+        $group: {
+          _id: {
+            hour: { $hour: "$tracks.created_at" },
+            user_ip: "$user_ip",
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id.hour",
+          unique_visitors: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 3. 区间内的平均停留时长（基于用户维度）
+app.get("/api/stats/daily/avg-duration", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const dateQuery = getDateRangeQuery(startDate, endDate);
+
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $match: {
+          "tracks.created_at": dateQuery,
+          "tracks.stay_time": { $gt: 0 },
+        },
+      },
+      {
+        $group: {
+          _id: "$user_ip",
+          total_time: { $sum: "$tracks.stay_time" },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avg_duration: { $avg: "$total_time" },
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      data: stats[0]?.avg_duration ? Math.round(stats[0].avg_duration) : 0,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 4. 区间内的地理分布（基于 UV）
+app.get("/api/stats/daily/geo-visitors", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const dateQuery = getDateRangeQuery(startDate, endDate);
+
+    // 获取在区间内有活动的所有用户
+    const activeIPs = await UserTracking.distinct("user_ip", {
+      "tracks.created_at": dateQuery,
+    });
+
+    // 统计这些用户的地理分布
+    const stats = await UserTracking.aggregate([
+      { $match: { user_ip: { $in: activeIPs } } },
+      { $group: { _id: "$profile.location.country", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// ===============================================
+// 新增：总览增强指标
+// ===============================================
+
+// 5. 用户活跃度分布（按访问次数分组）
+app.get("/api/stats/user-engagement", async (req, res) => {
+  try {
+    const stats = await UserTracking.aggregate([
+      {
+        $project: {
+          visit_count: { $size: "$tracks" },
+        },
+      },
+      {
+        $bucket: {
+          groupBy: "$visit_count",
+          boundaries: [1, 2, 5, 10, 20, 50, 100],
+          default: "100+",
+          output: {
+            count: { $sum: 1 },
+          },
+        },
+      },
+    ]);
+
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 6. 回访率统计
+app.get("/api/stats/retention", async (req, res) => {
+  try {
+    const totalUsers = await UserTracking.countDocuments();
+    const returningUsers = await UserTracking.countDocuments({
+      $expr: { $gt: [{ $size: "$tracks" }, 1] },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total: totalUsers,
+        returning: returningUsers,
+        rate:
+          totalUsers > 0 ? ((returningUsers / totalUsers) * 100).toFixed(1) : 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 7. 页面访问深度（平均每个用户访问的页面数）
+app.get("/api/stats/page-depth", async (req, res) => {
+  try {
+    const stats = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $group: {
+          _id: "$user_ip",
+          unique_pages: { $addToSet: "$tracks.page" },
+        },
+      },
+      {
+        $project: {
+          page_count: { $size: "$unique_pages" },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avg_depth: { $avg: "$page_count" },
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      data: stats[0]?.avg_depth ? stats[0].avg_depth.toFixed(1) : 0,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 高价值用户识别（访问次数 > 10 且停留时间 > 平均值）
+app.get("/api/stats/high-value-users", async (req, res) => {
+  try {
+    const avgTime = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.stay_time": { $gt: 0 } } },
+      { $group: { _id: null, avg: { $avg: "$tracks.stay_time" } } },
+    ]);
+
+    const threshold = avgTime[0]?.avg || 0;
+
+    const highValueUsers = await UserTracking.aggregate([
+      {
+        $project: {
+          user_ip: 1,
+          visit_count: { $size: "$tracks" },
+          total_time: { $sum: "$tracks.stay_time" },
+        },
+      },
+      {
+        $match: {
+          visit_count: { $gt: 10 },
+          total_time: { $gt: threshold },
+        },
+      },
+      { $count: "total" },
+    ]);
+
+    res.json({ success: true, data: highValueUsers[0]?.total || 0 });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 页面访问漏斗（首页 -> 详情页 -> 联系页）
+app.get("/api/stats/funnel", async (req, res) => {
+  try {
+    const funnel = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $group: {
+          _id: "$user_ip",
+          pages: { $addToSet: "$tracks.page" },
+        },
+      },
+      {
+        $project: {
+          visited_home: { $in: ["/", "$pages"] },
+          visited_detail: { $in: ["/detail", "$pages"] },
+          visited_contact: { $in: ["/contact", "$pages"] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          step1: { $sum: { $cond: ["$visited_home", 1, 0] } },
+          step2: { $sum: { $cond: ["$visited_detail", 1, 0] } },
+          step3: { $sum: { $cond: ["$visited_contact", 1, 0] } },
+        },
+      },
+    ]);
+
+    res.json({ success: true, data: funnel[0] || {} });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 7日留存率
+app.get("/api/stats/retention-7d", async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // 7天前注册的用户
+    const cohort = await UserTracking.find({
+      "profile.first_login": { $lte: sevenDaysAgo },
+    }).select("user_ip");
+
+    const cohortIPs = cohort.map((u) => u.user_ip);
+
+    // 这些用户中，最近7天内有活动的
+    const retained = await UserTracking.countDocuments({
+      user_ip: { $in: cohortIPs },
+      "profile.last_login": { $gte: sevenDaysAgo },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        cohort_size: cohortIPs.length,
+        retained: retained,
+        rate:
+          cohortIPs.length > 0
+            ? ((retained / cohortIPs.length) * 100).toFixed(1)
+            : 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+app.get("/api/stats/online-now", async (req, res) => {
+  try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const online = await UserTracking.countDocuments({
+      "profile.last_login": { $gte: fiveMinutesAgo },
+    });
+
+    res.json({ success: true, data: online });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// 后端接口：对比上周同期数据
+app.get("/api/stats/compare-last-week", async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+
+    const thisWeekData = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      { $match: { "tracks.created_at": { $gte: today } } },
+      { $count: "total" },
+    ]);
+
+    const lastWeekData = await UserTracking.aggregate([
+      { $unwind: "$tracks" },
+      {
+        $match: {
+          "tracks.created_at": {
+            $gte: lastWeek,
+            $lt: today,
+          },
+        },
+      },
+      { $count: "total" },
+    ]);
+
+    const thisWeek = thisWeekData[0]?.total || 0;
+    const lastWeekTotal = lastWeekData[0]?.total || 0;
+    const change =
+      lastWeekTotal > 0
+        ? (((thisWeek - lastWeekTotal) / lastWeekTotal) * 100).toFixed(1)
+        : 0;
+
+    res.json({
+      success: true,
+      data: {
+        this_week: thisWeek,
+        last_week: lastWeekTotal,
+        change_percent: change,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
 // 处理 404
 app.get("*", (req, res) => {
   res.status(404).json({ success: false, error: "Not found" });
