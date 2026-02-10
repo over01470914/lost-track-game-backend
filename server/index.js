@@ -208,8 +208,8 @@ app.post("/api/track", trackLimiter, async (req, res) => {
   try {
     let userTracking = await UserTracking.findOne({ user_ip });
 
+    let location;
     if (!userTracking) {
-      let location;
       if (mock_location) {
         location = mock_location;
       } else {
@@ -232,6 +232,8 @@ app.post("/api/track", trackLimiter, async (req, res) => {
     }
 
     let newData = {
+      user_ip,
+      location: location,
       event_type: type,
       event_target: target || "",
       timestamp: timestamp || Date.now(),
