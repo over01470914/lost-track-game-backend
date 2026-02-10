@@ -504,6 +504,60 @@ app.get("/api/stats/daily/targets", async (req, res) => {
   }
 });
 
+// ===============================================
+// 实时日志推送接口 (SSE)
+// ===============================================
+
+// 存储所有连接的客户端
+const logClients = new Set();
+
+// 拦截 console.log 并广播
+const originalLog = console.log;
+console.log = function (...args) {
+  // 调用原始 console.log
+  originalLog.apply(console, args);
+
+  // 格式化日志内容
+  const timestamp = new Date().toISOString();
+  const message = args
+    .map((arg) =>
+      typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)
+    )
+    .join(" ");
+
+  const logEntry = `[${timestamp}] ${message}`;
+
+  // 广播给所有连接的客户端
+  logClients.forEach((client) => {
+    client.write(`data: ${JSON.stringify({ log: logEntry })}\n\n`);
+  });
+};
+
+// SSE 端点（需要权限验证）
+app.get("/api/logs/stream", authGuard, (req, res) => {
+  // 设置 SSE 响应头
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  // 发送初始连接成功消息
+  res.write(
+    `data: ${JSON.stringify({ log: "[System] Log stream connected." })}\n\n`
+  );
+
+  // 将客户端加入集合
+  logClients.add(res);
+
+  console.log(`[SSE] New log client connected. Total: ${logClients.size}`);
+
+  // 客户端断开时清理
+  req.on("close", () => {
+    logClients.delete(res);
+    console.log(`[SSE] Client disconnected. Remaining: ${logClients.size}`);
+  });
+});
+
 // 处理 404
 app.get("*", (req, res) => {
   res.status(404).json({ success: false, error: "Not found" });

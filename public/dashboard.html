@@ -146,6 +146,12 @@
                         height: 250px;
                         width: 100%;
                     }
+                    .log-container .hover {
+                        background: rgba(255, 255, 255, 0.05);
+                    }
+                    /* .log-container .nth-child(even) {
+                        background: rgba(0, 0, 0, 0.2);
+                    } */
                 </style>
             </head>
             <body>
@@ -174,6 +180,11 @@
                         </li>
                         <li class="nav-item">
                             <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-pane" type="button">⚙️ 设置 (Settings)</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-pane" type="button">
+                                📡 实时日志 (Live Logs)
+                            </button>
                         </li>
 
                     </ul>
@@ -418,8 +429,39 @@
 
                                                         </div>
                                                     </div>
-                                                </div>
 
+                                                    <!-- ================= PANEL 4: 实时日志 ================= -->
+                                                    <div class="tab-pane fade" id="logs-pane">
+                                                        <div class="card">
+                                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                                <span>📡 Server Console Output (Real-time)</span>
+                                                                <div>
+                                                                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">🗑 Clear</button>
+                                                                    <button class="btn btn-sm btn-outline-info" id="toggleAutoScroll">
+                                                                        📌 Auto-scroll: ON
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-body p-0">
+                                                                <div id="log-container" style="
+                                                                                                                                                                                                                                                                                                                                    height: 600px;
+                                                                                                                                                                                                                                                                                                                                    overflow-y: auto;
+                                                                                                                                                                                                                                                                                                                                    background: #0a0e1a;
+                                                                                                                                                                                                                                                                                                                                    font-family: 'Courier New', monospace;
+                                                                                                                                                                                                                                                                                                                                    font-size: 0.85rem;
+                                                                                                                                                                                                                                                                                                                                    padding: 15px;
+                                                                                                                                                                                                                                                                                                                                    color: #00ff00;
+                                                                                                                                                                                                                                                                                                                                    line-height: 1.6;
+                                                                                                                                                                                                                                                                                                                                ">
+                                                                    <div class="text-muted text-center py-5">
+                                                                        Waiting for connection...
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
 
                                             </div>
                                         </div>
@@ -972,6 +1014,95 @@
                                                 el.addEventListener('shown.bs.tab', () => {
                                                     window.dispatchEvent(new Event('resize'));
                                                 });
+                                            });
+
+                                            // ===============================================
+                                            // 实时日志流 (SSE)
+                                            // ===============================================
+
+                                            let logEventSource = null;
+                                            let autoScroll = true;
+
+                                            // 切换自动滚动
+                                            document.getElementById('toggleAutoScroll').addEventListener('click', function () {
+                                                autoScroll = ! autoScroll;
+                                                this.textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
+                                                this.classList.toggle('btn-outline-info', autoScroll);
+                                                this.classList.toggle('btn-outline-warning', ! autoScroll);
+                                            });
+
+                                            // 清空日志
+                                            function clearLogs() {
+                                                document.getElementById('log-container').innerHTML = '';
+                                            }
+
+                                            // 添加日志条目
+                                            function appendLog(message) {
+                                                const container = document.getElementById('log-container');
+                                                const logLine = document.createElement('div');
+                                                logLine.textContent = message;
+                                                logLine.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                                                logLine.style.padding = '4px 0';
+                                                container.appendChild(logLine);
+
+                                                // 自动滚动到底部
+                                                if (autoScroll) {
+                                                    container.scrollTop = container.scrollHeight;
+                                                }
+
+                                                // 限制最多显示 500 条（防止内存溢出）
+                                                if (container.children.length > 500) {
+                                                    container.removeChild(container.firstChild);
+                                                }
+                                            }
+
+                                            // 连接日志流
+                                            function connectLogStream() {
+                                                if (logEventSource) {
+                                                    logEventSource.close();
+                                                }
+
+                                                clearLogs();
+                                                appendLog('[System] Connecting to log stream...');
+
+                                                logEventSource = new EventSource(`/api/logs/stream`, {
+                                                    // 注意：EventSource 不支持自定义 headers，需要通过 URL 参数传递 Token
+                                                    // 但这样不安全，所以我们依赖 Cookie 或者修改后端逻辑
+                                                });
+
+                                                logEventSource.onopen = () => {
+                                                    appendLog('[System] ✅ Connected to server logs.');
+                                                };
+
+                                                logEventSource.onmessage = (event) => {
+                                                    try {
+                                                        const data = JSON.parse(event.data);
+                                                        appendLog(data.log);
+                                                    } catch (e) {
+                                                        appendLog('[Error] Failed to parse log data.');
+                                                    }
+                                                };
+
+                                                logEventSource.onerror = (err) => {
+                                                    appendLog('[System] ❌ Connection lost. Retrying in 3s...');
+                                                    logEventSource.close();
+                                                    setTimeout(connectLogStream, 3000);
+                                                };
+                                            }
+
+                                            // 监听 Tab 切换，首次打开时连接
+                                            const logsTabBtn = document.getElementById('logs-tab');
+                                            logsTabBtn.addEventListener('shown.bs.tab', () => {
+                                                if (! logEventSource) {
+                                                    connectLogStream();
+                                                }
+                                            }, {once: true});
+
+                                            // 页面关闭时断开连接
+                                            window.addEventListener('beforeunload', () => {
+                                                if (logEventSource) {
+                                                    logEventSource.close();
+                                                }
                                             });
                                         </script>
                                     </body>
