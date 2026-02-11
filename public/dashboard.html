@@ -294,7 +294,7 @@
                                     <div class="row">
                                         <div class="col-lg-8">
                                             <div class="card bg-dark">
-                                                <div class="card-header">⏰ 访问时段分布 (Hourly Visitors)</div>
+< div class = "card-header" > ⏰ 访问时段分布(Hourly Visitors - Beijing Time UTC + 8) < /div>
                                                 <div class="card-body">
                                                     <div class="chart-container">
                                                         <canvas id="rangeVisitHourlyChart"></canvas>
@@ -351,7 +351,7 @@
                                         <div class="row">
                                             <div class="col-lg-6">
                                                 <div class="card bg-dark">
-                                                    <div class="card-header">📊 交互时段热力</div>
+<div class = "card-header" > 📊 交互时段热力(Hourly Interactions - Beijing Time UTC + 8) </div>
                                                     <div class="card-body">
                                                         <div class="chart-container-sm">
                                                             <canvas id="rangeHourlyChart"></canvas>
@@ -722,34 +722,46 @@
                             document.getElementById('range-duration').innerText = formatTime(duration);
                         }
 
-                        // 访问时段分布（基于 UV）
-                        const visitHourly = await fetchData(`daily/visit-hourly${query}`);
-                        if (visitHourly) {
-                            const hours = Array.from({
-                                length: 24
-                            }, (_, i) => i);
-                            const dataMap = {};
-                            visitHourly.forEach(d => dataMap[d._id] = d.unique_visitors);
+// 访问时段分布（基于 UV）
+const visitHourly = await fetchData(`daily/visit-hourly${query}`);
+if (visitHourly) {
+    const hours = Array.from({
+        length: 24
+    }, (_, i) => i);
+    const dataMap = {};
+    visitHourly.forEach(d => dataMap[d._id] = d.unique_visitors);
 
-                            const ctx = document.getElementById('rangeVisitHourlyChart').getContext('2d');
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-                            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+    const ctx = document.getElementById('rangeVisitHourlyChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-                            renderChart('rangeVisitHourlyChart', 'line', {
-                                labels: hours.map(h => `${h}:00`),
-                                datasets: [
-                                    {
-                                        label: 'Unique Visitors',
-                                        data: hours.map(h => dataMap[h] || 0),
-                                        borderColor: '#3b82f6',
-                                        backgroundColor: gradient,
-                                        fill: true,
-                                        tension: 0.4
-                                    }
-                                ]
-                            });
-                        }
+    renderChart('rangeVisitHourlyChart', 'line', {
+        labels: hours.map(h => `${h}:00`), // 🔧 保持简洁，在标题中标注时区
+        datasets: [
+            {
+                label: 'Unique Visitors',
+                data: hours.map(h => dataMap[h] || 0),
+                borderColor: '#3b82f6',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    }, { // 🔧 [新增] 在图表配置中添加时区标注
+        plugins: {
+            title: {
+                display: true,
+                text: '⏰ Hourly Visitors (Beijing Time UTC+8)', // 标注时区
+                color: '#94a3b8',
+                font: {
+                    size: 12
+                }
+            }
+        }
+    });
+}
+
 
                         // 地理分布（基于 UV）
                         const geoVisitors = await fetchData(`daily/geo-visitors${query}`);
@@ -775,34 +787,46 @@
                             document.getElementById('range-interaction-time').innerText = formatTime(overview.avg_stay_time);
                         }
 
-                        // 交互时段热力
-                        const hourly = await fetchData(`daily/hourly${query}`);
-                        if (hourly) {
-                            const hours = Array.from({
-                                length: 24
-                            }, (_, i) => i);
-                            const dataMap = {};
-                            hourly.forEach(d => dataMap[d._id] = d.count);
+// 交互时段热力
+const hourly = await fetchData(`daily/hourly${query}`);
+if (hourly) {
+    const hours = Array.from({
+        length: 24
+    }, (_, i) => i);
+    const dataMap = {};
+    hourly.forEach(d => dataMap[d._id] = d.count);
 
-                            const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
-                            gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
-                            gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+    const ctx = document.getElementById('rangeHourlyChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
+    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
 
-                            renderChart('rangeHourlyChart', 'line', {
-                                labels: hours.map(h => `${h}:00`),
-                                datasets: [
-                                    {
-                                        label: 'Interactions',
-                                        data: hours.map(h => dataMap[h] || 0),
-                                        borderColor: '#f59e0b',
-                                        backgroundColor: gradient,
-                                        fill: true,
-                                        tension: 0.4
-                                    }
-                                ]
-                            });
-                        }
+    renderChart('rangeHourlyChart', 'line', {
+        labels: hours.map(h => `${h}:00`),
+        datasets: [
+            {
+                label: 'Interactions',
+                data: hours.map(h => dataMap[h] || 0),
+                borderColor: '#f59e0b',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    }, { // 🔧 [新增] 在图表配置中添加时区标注
+        plugins: {
+            title: {
+                display: true,
+                text: '📊 Hourly Interactions (Beijing Time UTC+8)', // 标注时区
+                color: '#94a3b8',
+                font: {
+                    size: 12
+                }
+            }
+        }
+    });
+}
+
 
                         // 热门组件
                         const targets = await fetchData(`daily/targets${query}`);

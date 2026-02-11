@@ -131,7 +131,7 @@ async function sendEmail(subject, htmlContent) {
   }
 }
 
-// [核心] 计算当前的各项指标（增强版）
+// [核心] 计算当前的各项指标
 async function calculateMetrics(rangeStart = null) {
   if (!UserTracking) throw new Error("DB not initialized");
 
@@ -280,14 +280,25 @@ async function calculateMetrics(rangeStart = null) {
     { $limit: 5 },
   ]);
 
-  // 访问高峰时段
+  // 访问高峰时段（修复：使用北京时间 UTC+8）
   const hourlyStats = await UserTracking.aggregate([
     { $unwind: "$tracks" },
     { $match: { "tracks.created_at": dateQuery } },
     {
+      $addFields: {
+        // 将 UTC 时间转换为北京时间（+8小时）
+        beijing_hour: {
+          $hour: {
+            date: "$tracks.created_at",
+            timezone: "+08:00",
+          },
+        },
+      },
+    },
+    {
       $group: {
         _id: {
-          hour: { $hour: "$tracks.created_at" },
+          hour: "$beijing_hour",
           user_ip: "$user_ip",
         },
       },
@@ -783,9 +794,26 @@ const initHooks = (app, userTrackingModel) => {
 
   app.use("/api/admin", router);
 
+  // [新增] 初始化快照清理任务
+  function startSnapshotCleanup() {
+    // 每天凌晨 3:00 清理 30 天前的快照
+    schedule.scheduleJob("0 3 * * *", async () => {
+      try {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const result = await ReportSnapshot.deleteMany({
+          timestamp: { $lt: thirtyDaysAgo },
+        });
+        console.log(`[Cleanup] Deleted ${result.deletedCount} old snapshots.`);
+      } catch (error) {
+        console.error("[Cleanup] Error:", error);
+      }
+    });
+  }
+
   mongoose.connection.once("open", () => {
     loadConfig();
     startAnomalyDetection();
+    startSnapshotCleanup();
   });
 
   console.log("[Hook] Module initialized with enhanced metrics.");

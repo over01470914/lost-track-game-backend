@@ -170,15 +170,52 @@ async function getIPGeolocation(ip) {
 // 3. 管理员接口：增加 authGuard 保护
 app.use("/api/admin", authGuard);
 
-// 重置数据库接口
+// 重置数据库接口（增强版 - 带详细日志）
 app.delete("/api/admin/reset", async (req, res) => {
   try {
-    await UserTracking.deleteMany({});
-    console.log("Database reset successfully.");
-    res.status(200).json({ success: true, message: "All data deleted" });
+    const results = {
+      usertracking_deleted: 0,
+      snapshots_deleted: 0,
+      config_preserved: true,
+    };
+
+    // 1. 删除用户追踪数据
+    const userResult = await UserTracking.deleteMany({});
+    results.usertracking_deleted = userResult.deletedCount;
+    console.log(
+      `[Reset] Deleted ${results.usertracking_deleted} user tracking records.`
+    );
+
+    // 2. 删除报表快照数据
+    const ReportSnapshot = mongoose.model("ReportSnapshot");
+    const snapshotResult = await ReportSnapshot.deleteMany({});
+    results.snapshots_deleted = snapshotResult.deletedCount;
+    console.log(
+      `[Reset] Deleted ${results.snapshots_deleted} report snapshots.`
+    );
+
+    // 3. 可选：删除系统配置
+    // 如果需要完全重置（包括邮件配置），取消下面的注释
+    /*
+    const SystemConfig = mongoose.model("SystemConfig");
+    const configResult = await SystemConfig.deleteMany({});
+    results.config_deleted = configResult.deletedCount;
+    results.config_preserved = false;
+    console.log(`[Reset] Deleted ${results.config_deleted} system configs.`);
+    */
+
+    res.status(200).json({
+      success: true,
+      message: "Database reset successfully",
+      details: results,
+    });
   } catch (error) {
-    console.error("Error resetting database:", error);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("[Reset] Error resetting database:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error",
+      details: error.message,
+    });
   }
 });
 
@@ -476,7 +513,18 @@ app.get("/api/stats/daily/hourly", async (req, res) => {
       {
         $match: { "tracks.created_at": getDateRangeQuery(startDate, endDate) },
       },
-      { $group: { _id: { $hour: "$tracks.created_at" }, count: { $sum: 1 } } },
+      // 🔧 [修复] 添加时区转换为北京时间 (UTC+8)
+      {
+        $addFields: {
+          beijing_hour: {
+            $hour: {
+              date: "$tracks.created_at",
+              timezone: "+08:00", // 北京时间
+            },
+          },
+        },
+      },
+      { $group: { _id: "$beijing_hour", count: { $sum: 1 } } }, // 使用转换后的小时
       { $sort: { _id: 1 } },
     ]);
     res.json({ success: true, data: stats });
@@ -557,10 +605,21 @@ app.get("/api/stats/daily/visit-hourly", async (req, res) => {
     const stats = await UserTracking.aggregate([
       { $unwind: "$tracks" },
       { $match: { "tracks.created_at": dateQuery } },
+      // 🔧 [修复] 添加时区转换为北京时间 (UTC+8)
+      {
+        $addFields: {
+          beijing_hour: {
+            $hour: {
+              date: "$tracks.created_at",
+              timezone: "+08:00", // 北京时间
+            },
+          },
+        },
+      },
       {
         $group: {
           _id: {
-            hour: { $hour: "$tracks.created_at" },
+            hour: "$beijing_hour", // 使用转换后的小时
             user_ip: "$user_ip",
           },
         },
